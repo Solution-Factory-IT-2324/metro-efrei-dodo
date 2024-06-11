@@ -17,7 +17,7 @@ def setup_database(db_host=None, db_user=None, db_password=None, db_name=None, v
             cursor = database_connection.cursor()
             with open(f"{version}/setup{version.lower()}.sql", "r") as file:
                 cursor.execute(file.read(), multi=True)
-                cursor.close()
+            cursor.close()
             database_connection.close()
             print(f"Database setup complete. Version: {version}")
         else:
