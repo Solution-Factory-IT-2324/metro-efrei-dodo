@@ -40,7 +40,6 @@ def connection(db_host, db_user, db_password, db_name=None):
             password=db_password,
             database=db_name if db_name else None
         )
-        database_connection.start_transaction(isolation_level='READ COMMITTED')
     except mysql.connector.Error as e:
         print(f"Error connecting to database: {e}")
         return e.sqlstate
