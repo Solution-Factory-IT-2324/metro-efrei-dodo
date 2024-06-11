@@ -7,6 +7,7 @@ Version de Python: 3.12
 # Import libraires
 from config import version
 from database.connection import connection
+from database.fill_data import fill_data
 
 
 def setup_database(db_host=None, db_user=None, db_password=None, db_name=None, version=None):
@@ -19,6 +20,8 @@ def setup_database(db_host=None, db_user=None, db_password=None, db_name=None, v
                 cursor.execute(file.read(), multi=True)
             cursor.close()
             database_connection.close()
+            print(f"Database \"{db_name}\" created. Version: {version}")
+            fill_data(db_host=db_host, db_user=db_user, db_password=db_password, db_name=db_name, version=version)
             print(f"Database setup complete. Version: {version}")
         else:
             database_connection.close()

@@ -6,7 +6,7 @@ USE MEDV1;
 CREATE TABLE IF NOT EXISTS stations (
     station_id INT PRIMARY KEY,
     station_nom VARCHAR(100) NOT NULL,
-    station_ligne INT NOT NULL,
+    station_ligne VARCHAR(20) NOT NULL,
     station_est_terminus BOOLEAN NOT NULL,
     station_branchement INT NOT NULL
 );
@@ -26,5 +26,6 @@ CREATE TABLE IF NOT EXISTS positions (
     station_id INT PRIMARY KEY,
     position_x INT NOT NULL,
     position_y INT NOT NULL,
+    nom VARCHAR(100) NOT NULL,
     FOREIGN KEY (station_id) REFERENCES stations(station_id)
 );
