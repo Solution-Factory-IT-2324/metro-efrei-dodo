@@ -1,17 +1,16 @@
--------------------  Stations et liens du métro parisien, version 1998 - 2002 --------------
+# -------------------  Stations et liens du métro parisien, version 1998 - 2002 --------------
 
---------- 1) Description des données ------------
+# --------- 1) Description des données ------------
 
 # format pour les sommets :
-V num_sommet nom_sommet numéro_ligne si_terminus branchement (0 stations en commun, 1 pour la direction 1,  2 pour la direction 2, ainsi 
-  de suite ...)
+# V num_sommet nom_sommet numéro_ligne si_terminus branchement (0 stations en commun, 1 pour la direction 1, 2 pour la direction 2, ainsi de suite ...)
     
 # format pour les arrêtes :
-E num_sommet1 num_sommet2 temps_en_secondes 
+# E num_sommet1 num_sommet2 temps_en_secondes
 
-PS : vous pouvez observez que les derniers arrêtes correspondent aux temps de correspondance dans une même station commerciale.
+# PS : vous pouvez observez que les derniers arrêtes correspondent aux temps de correspondance dans une même station commerciale.
 
---------- 2) Les données ----------------------------------------
+# --------- 2) Les données ----------------------------------------
 
 V 0000 Abbesses ;12 ;False 0
 V 0001 Alexandre Dumas ;2 ;False 0
