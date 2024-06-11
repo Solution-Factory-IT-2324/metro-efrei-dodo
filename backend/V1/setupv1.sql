@@ -23,9 +23,11 @@ CREATE TABLE IF NOT EXISTS connexions (
 
 -- Création de la table des positions
 CREATE TABLE IF NOT EXISTS positions (
-    station_id INT PRIMARY KEY,
+    position_id INT AUTO_INCREMENT PRIMARY KEY,
+    station_id INT,
     position_x INT NOT NULL,
     position_y INT NOT NULL,
     nom VARCHAR(100) NOT NULL,
-    FOREIGN KEY (station_id) REFERENCES stations(station_id)
+    FOREIGN KEY (station_id) REFERENCES stations(station_id),
+    UNIQUE (station_id, position_x, position_y)
 );
