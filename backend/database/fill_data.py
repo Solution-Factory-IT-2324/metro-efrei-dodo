@@ -7,18 +7,18 @@ Version de Python: 3.12
 # Import libraires
 import mysql.connector.errors
 from database.connection import connection
+import config
 
-
-def fill_data(db_host=None, db_user=None, db_password=None, db_name=None, version=None):
+def fill_data():
     try:
-        database_connection = connection(db_host=db_host, db_user=db_user, db_password=db_password, db_name=db_name)
+        database_connection = connection()
         database_connection.start_transaction(isolation_level='READ COMMITTED')
         if database_connection.is_connected():
-            match version:
+            match config.version:
                 case "V1":
-                    print(f"Filling database {db_name} with data from {version}")
+                    print(f"Filling database {config.db_name} with data from {config.version}")
                     try:
-                        with open(f"{version}/metro.txt", "r") as file:
+                        with open(f"{config.version}/metro.txt", "r") as file:
                             for line in file:
                                 # Ignore line starting with # or empty line
                                 if line.startswith("#") or not line.strip():
@@ -64,7 +64,7 @@ def fill_data(db_host=None, db_user=None, db_password=None, db_name=None, versio
                         database_connection.rollback()
                     try:
                         # Process pospoints.txt
-                        with open(f"{version}/pospoints.txt", "r") as file:
+                        with open(f"{config.version}/pospoints.txt", "r") as file:
                             for line in file:
                                 parts = line.strip().split(';')
                                 position_x = int(parts[0])
@@ -99,13 +99,13 @@ def fill_data(db_host=None, db_user=None, db_password=None, db_name=None, versio
                         database_connection.rollback()
 
                     database_connection.close()
-                    print(f"Database filled with data. Version: {version}")
+                    print(f"Database filled with data. Version: {config.version}")
                 case "V2":
                     pass
                 case "V3":
                     pass
                 case _:
-                    print(f"Error filling database: Version {version} not found")
+                    print(f"Error filling database: Version {config.version} not found")
         else:
             database_connection.close()
             raise ValueError(f"Error filling database: Connection is not open")

@@ -5,14 +5,15 @@ Description: Ce fichier permet de configurer la base de données, en fonction de
 Version de Python: 3.12
 """
 # Import libraires
-from config import version
+import config
 from database.connection import connection
 from database.fill_data import fill_data
 
 
-def setup_database(db_host=None, db_user=None, db_password=None, db_name=None, version=None):
+def setup_database(db_host=config.db_host, db_user=config.db_user, db_password=config.db_password, db_name=config.db_name, version=config.version):
     try:
-        database_connection = connection(db_host=db_host, db_user=db_user, db_password=db_password)
+        database_connection = connection(db_name=None)
+        print(database_connection)
         if database_connection.is_connected():
             print(f"Setting up database {db_name}")
             cursor = database_connection.cursor()
@@ -21,7 +22,7 @@ def setup_database(db_host=None, db_user=None, db_password=None, db_name=None, v
             cursor.close()
             database_connection.close()
             print(f"Database \"{db_name}\" created. Version: {version}")
-            fill_data(db_host=db_host, db_user=db_user, db_password=db_password, db_name=db_name, version=version)
+            fill_data()
             print(f"Database setup complete. Version: {version}")
         else:
             database_connection.close()
