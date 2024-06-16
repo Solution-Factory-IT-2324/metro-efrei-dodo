@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS connexions (
     station1_id INT,
     station2_id INT,
     temps_en_secondes INT,
+    direction INT DEFAULT 0, -- 0 = bi-directionnelle, 1 = station1 -> station2, 2 pour station2 -> station1
     PRIMARY KEY (station1_id, station2_id),
     FOREIGN KEY (station1_id) REFERENCES stations(station_id),
     FOREIGN KEY (station2_id) REFERENCES stations(station_id)

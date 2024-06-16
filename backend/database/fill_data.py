@@ -47,10 +47,12 @@ def fill_data(db_host=None, db_user=None, db_password=None, db_name=None, versio
                                     station1_id = int(parts[1])
                                     station2_id = int(parts[2])
                                     temps_en_secondes = int(parts[3])
+                                    # Check if the direction exist
+                                    direction = int(parts[4]) if len(parts) > 4 else 0
 
                                     cursor = database_connection.cursor()
-                                    query = "INSERT INTO connexions (station1_id, station2_id, temps_en_secondes) VALUES (%s, %s, %s)"
-                                    cursor.execute(query, (station1_id, station2_id, temps_en_secondes))
+                                    query = "INSERT INTO connexions (station1_id, station2_id, temps_en_secondes, direction) VALUES (%s, %s, %s, %s)"
+                                    cursor.execute(query, (station1_id, station2_id, temps_en_secondes, direction))
                                     cursor.close()
                                 else:
                                     continue
