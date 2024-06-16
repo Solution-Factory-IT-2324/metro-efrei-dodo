@@ -5,9 +5,11 @@ Description: Ce fichier est le fichier principale du backend.
 Version de Python: 3.12
 """
 # Files from the backend
+import config
 import database.connection as db
 from backend.database import setup as setup
-import config
+
+from V1.graph import get_graph_data
 
 # Test connection to the database
 test_connection = db.test_connection(db_name=config.db_name)
@@ -22,3 +24,5 @@ elif test_connection == "42000":
 # Other case
 else:
     print(f"Error connecting to database: Connection failed")
+
+get_graph_data()
