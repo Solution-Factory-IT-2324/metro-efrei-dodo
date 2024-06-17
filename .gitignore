@@ -137,3 +137,4 @@ dist
 
 # Python
 __pycache__/
+backend/.env
