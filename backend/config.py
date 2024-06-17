@@ -4,6 +4,19 @@ Auteurs: KOCOGLU Lucas
 Description: Ce fichier permet d'établir les variables de configuration pour le backend.
 Version de Python: 3.12
 """
+# Import libraires
+from dotenv import load_dotenv
+import os
+
 # Choix de la version
 version = "V1"
 database_name = "MEDV1"
+
+# Charge environment variables
+load_dotenv(dotenv_path='.env')
+
+# Fetch environment & config variable
+db_host = os.getenv('DB_HOST')
+db_user = os.getenv('DB_USER')
+db_password = os.getenv('DB_PASSWORD')
+db_name = database_name
