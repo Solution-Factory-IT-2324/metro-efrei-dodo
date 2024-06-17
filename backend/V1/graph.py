@@ -27,7 +27,6 @@ def get_graph_data():
     database_connection.close()
 
     graph = create_graph(stations, connexions, positions)
-    print(graph)
     return graph
 
 

@@ -29,6 +29,12 @@ def draw_graph(graph_data):
         destination = graph_data["vertex"][arc["destination"]]["position"]
         direction = arc["direction"]
 
+        if origine is None:
+            print(f"Station {arc['origine']} sans position du chemin {arc}")
+            continue
+        if destination is None:
+            print(f"Station {arc['destination']} sans position du chemin {arc}")
+            continue
         # Mettre un rond pour chaque station
         canvas.create_oval(origine[0] - 2, origine[1] - 2, origine[0] + 2, origine[1] + 2, fill="black")
 
