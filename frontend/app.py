@@ -1,22 +1,38 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, send_from_directory
+import matplotlib
+matplotlib.use('Agg')  # Utilise le backend 'Agg' (pour les sorties en fichier) au lieu de 'interagg'
+
+import matplotlib.pyplot as plt
+
+import os
 
 app = Flask(__name__)
+
 
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
 
+
 @app.route('/static/<path:path>')
 def serve_static(path):
     return send_from_directory('static', path)
 
-@app.route('/add', methods=['POST'])
-def add_numbers():
-    data = request.get_json()
-    number1 = data.get('number1')
-    number2 = data.get('number2')
-    result = number1 + number2
-    return jsonify(result=result)
+
+@app.route('/generate-image', methods=['GET'])
+def generate_image():
+    # Générer une image avec matplotlib
+    fig, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1])
+
+    # Chemin pour enregistrer l'image
+    image_path = os.path.join('static/images', 'plot.png')
+    fig.savefig(image_path)
+
+    return "Image generated"
+
 
 if __name__ == '__main__':
+    # Assurez-vous que le dossier existe
+    os.makedirs('static/images', exist_ok=True)
     app.run(debug=True)
