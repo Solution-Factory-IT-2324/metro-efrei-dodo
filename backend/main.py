@@ -9,8 +9,6 @@ import config
 import database.connection as db
 from backend.database import setup as setup
 
-from V1.graph import get_graph_data
-
 # Test connection to the database
 test_connection = db.test_connection(db_name=config.db_name)
 
@@ -25,4 +23,14 @@ elif test_connection == "42000":
 else:
     print(f"Error connecting to database: Connection failed")
 
-get_graph_data()
+match (config.version):
+    case "V1":
+        from V1.graph import get_graph_data
+        from V1.draw import draw_graph
+
+        graph = get_graph_data()
+        draw_graph(graph)
+    case "V2":
+        pass
+    case "V3":
+        pass
