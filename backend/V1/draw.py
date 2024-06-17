@@ -29,15 +29,15 @@ def draw_graph(graph_data):
         destination = graph_data["vertex"][arc["destination"]]["position"]
         direction = arc["direction"]
 
+        # Mettre un rond pour chaque station
+        canvas.create_oval(origine[0] - 2, origine[1] - 2, origine[0] + 2, origine[1] + 2, fill="black")
+
         if not (0 <= origine[0] < image_width and 0 <= origine[1] < image_height):
             print(f"Coordonnées d'origine hors limites: {origine}")
             continue
         if not (0 <= destination[0] < image_width and 0 <= destination[1] < image_height):
             print(f"Coordonnées de destination hors limites: {destination}")
             continue
-
-        # Mettre un rond pour chaque station
-        canvas.create_oval(origine[0] - 2, origine[1] - 2, origine[0] + 2, origine[1] + 2, fill="black")
 
         match (graph_data["vertex"][arc["origine"]]["station_ligne"]):
             case "1":
