@@ -180,7 +180,7 @@
 554;803;Glacière
 585;802;Corvisart
 607;801;Place@d'Italie
-613;803;Place@d'Itali
+613;803;Place@d'Italie
 645;802;Nationale
 677;802;Chevaleret
 711;788;Quai@de@la@Gare

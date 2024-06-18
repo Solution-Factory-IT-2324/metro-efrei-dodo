@@ -1,17 +1,16 @@
--------------------  Stations et liens du métro parisien, version 1998 - 2002 --------------
+# -------------------  Stations et liens du métro parisien, version 1998 - 2002 --------------
 
---------- 1) Description des données ------------
+# --------- 1) Description des données ------------
 
 # format pour les sommets :
-V num_sommet nom_sommet numéro_ligne si_terminus branchement (0 stations en commun, 1 pour la direction 1,  2 pour la direction 2, ainsi 
-  de suite ...)
+# V num_sommet nom_sommet numéro_ligne si_terminus branchement (0 stations en commun, 1 pour la direction 1, 2 pour la direction 2, ainsi de suite ...)
     
 # format pour les arrêtes :
-E num_sommet1 num_sommet2 temps_en_secondes 
+# E num_sommet1 num_sommet2 temps_en_secondes
 
-PS : vous pouvez observez que les derniers arrêtes correspondent aux temps de correspondance dans une même station commerciale.
+# PS : vous pouvez observez que les derniers arrêtes correspondent aux temps de correspondance dans une même station commerciale.
 
---------- 2) Les données ----------------------------------------
+# --------- 2) Les données ----------------------------------------
 
 V 0000 Abbesses ;12 ;False 0
 V 0001 Alexandre Dumas ;2 ;False 0
@@ -452,11 +451,11 @@ E 32 343 54
 E 32 303 41
 E 33 344 52
 E 33 304 41
-E 34 248 36 
+E 34 248 36 1
 E 34 41 57
 E 35 111 34
 E 35 172 40
-E 36 198 105 
+E 36 198 105 1
 E 36 37 39
 E 38 336 35
 E 38 289 38
@@ -483,7 +482,7 @@ E 50 77 54
 E 50 109 62
 E 51 137 62
 E 51 202 69
-E 52 201 20 
+E 52 201 20 1
 E 53 372 47
 E 53 167 33
 E 54 145 51
@@ -542,7 +541,7 @@ E 88 301 47
 E 89 90 29
 E 90 91 26
 E 91 185 27
-E 92 34 37 
+E 92 34 37 1
 E 93 97 45
 E 94 200 27
 E 94 205 39
@@ -611,7 +610,7 @@ E 142 339 27
 E 143 340 29
 E 143 160 44
 E 144 170 46
-E 145 373 55 
+E 145 373 55 1
 E 146 283 33
 E 146 247 50
 E 147 159 44
@@ -662,9 +661,9 @@ E 193 271 38
 E 194 276 67
 E 196 259 47 
 E 197 199 28
-E 198 52 42 
+E 198 52 42 1
 E 200 257 51
-E 201 145 46 
+E 201 145 46 1
 E 202 326 112
 E 203 317 53
 E 203 332 40
@@ -709,12 +708,12 @@ E 238 322 27
 E 244 352 37
 E 246 302 37
 E 247 357 23
-E 248 280 57 
+E 248 280 57 1
 E 249 273 35
 E 254 345 75
 E 256 362 37
 E 257 265 26
-E 259 198 47
+# E 259 198 47
 E 259 36 84 
 E 260 266 37
 E 261 266 46
@@ -724,7 +723,7 @@ E 269 301 35
 E 275 328 41
 E 278 357 59
 E 279 320 37
-E 280 92 43 
+E 280 92 43 1
 E 285 305 61
 E 286 370 35
 E 292 361 38
@@ -751,7 +750,7 @@ E 346 358 33
 E 360 368 47
 E 363 365 28
 E 364 365 28
-E 373 196 37 
+E 373 196 37 1
 E 7 8 180
 E 13 14 180
 E 16 18 240
