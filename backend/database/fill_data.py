@@ -185,6 +185,13 @@ def fill_data():
                         start = time()
                         database_connection.commit()
                         print(f"Time to commit: {time() - start}")
+
+                        # Create index
+                        cursor = database_connection.cursor()
+                        query = "CREATE INDEX idx_stop_id ON stops (stop_id); CREATE INDEX idx_trip_id ON stop_times (trip_id); CREATE INDEX idx_from_stop_id ON transfers (from_stop_id); CREATE INDEX idx_to_stop_id ON transfers (to_stop_id);"
+                        cursor.execute(query)
+                        cursor.close()
+
                         database_connection.close()
                     except Exception as e:
                         print(f"Error processing data: {e}")
