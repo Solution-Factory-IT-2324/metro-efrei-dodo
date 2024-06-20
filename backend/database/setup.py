@@ -13,7 +13,6 @@ from database.fill_data import fill_data
 def setup_database(db_host=config.db_host, db_user=config.db_user, db_password=config.db_password, db_name=config.db_name, version=config.version):
     try:
         database_connection = connection(db_name=None)
-        print(database_connection)
         if database_connection.is_connected():
             print(f"Setting up database {db_name}")
             cursor = database_connection.cursor()
