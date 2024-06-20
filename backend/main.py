@@ -31,6 +31,10 @@ match (config.version):
         graph = get_graph_data()
         draw_graph(graph)
     case "V2":
-        pass
+        from V2.graph import get_graph_data
+
+        graph = get_graph_data()
+        with open(f"{config.version}/graph.txt", "w") as file:
+            file.write(str(graph))
     case "V3":
         pass
