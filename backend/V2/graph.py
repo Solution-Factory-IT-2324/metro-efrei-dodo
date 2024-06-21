@@ -75,7 +75,7 @@ def create_graph(stops, connections, transfers):
                 'zone_id': stop.get('zone_id'),
                 'location_type': stop.get('location_type'),
                 'parent_station': stop.get('parent_station'),
-                'line': stop.get('route_short_name'),
+                'line': stop.get('route_id'),
                 'wheelchair': stop.get('wheelchair_boarding')
             }
 
