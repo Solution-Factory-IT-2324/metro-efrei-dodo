@@ -4,7 +4,7 @@ Auteurs: KOCOGLU Lucas
 Description: Ce fichier permet de remplir la base de données, en fonction de la version de l'application.
 Version de Python: 3.12
 """
-# Import libraires
+# Import librairies
 import mysql.connector.errors
 from database.connection import connection
 import config
@@ -20,7 +20,7 @@ def fill_data():
                     try:
                         with open(f"{config.version}/metro.txt", "r") as file:
                             for line in file:
-                                # Ignore line starting with # or empty line
+                                # Ignore lines starting with # or empty lines
                                 if line.startswith("#") or not line.strip():
                                     continue
 
@@ -62,38 +62,79 @@ def fill_data():
                     except Exception as e:
                         print(f"Error processing metro.txt: {e}")
                         database_connection.rollback()
+
                     try:
                         # Process pospoints.txt
+                        station_coords = {}
                         with open(f"{config.version}/pospoints.txt", "r") as file:
                             for line in file:
                                 parts = line.strip().split(';')
                                 position_x = int(parts[0])
                                 position_y = int(parts[1])
                                 nom = parts[2].replace('@', ' ').strip()
-                                print([position_x, position_y, nom])
+                                if nom not in station_coords:
+                                    station_coords[nom] = []
+                                station_coords[nom].append((position_x, position_y))
 
-                                cursor = database_connection.cursor()
-                                cursor.execute("SELECT station_id FROM stations WHERE station_nom = %s", (nom,))
-                                results = cursor.fetchall()
+                        print(station_coords)
+                        # Asignate coordinates to stations
+                        cursor = database_connection.cursor()
+                        for nom in list(station_coords.keys()):
+                            coords = station_coords[nom]
+                            cursor.execute("SELECT station_id FROM stations WHERE station_nom = %s", (nom,))
+                            results = cursor.fetchall()
 
-                                if results:
-                                    for result in results:
-                                        station_id = result[0]
+                            if results:
+                                for result in results:
+                                    station_id = result[0]
+                                    if coords:
+                                        position_x, position_y = coords.pop(0) if len(coords) > 1 else coords[-1]
                                         print([station_id, position_x, position_y, nom])
                                         query = "INSERT INTO positions (station_id, position_x, position_y, nom) VALUES (%s, %s, %s, %s)"
                                         try:
                                             cursor.execute(query, (station_id, position_x, position_y, nom))
                                         except mysql.connector.Error as err:
                                             if err.errno == 1062:
-                                                print(
-                                                    f"Duplicate entry for {nom} at {position_x}, {position_y}. Skipping...")
+                                                print(f"Duplicate entry for {nom} at {position_x}, {position_y}. Skipping...")
                                             else:
                                                 raise err
-                                else:
-                                    print(f"No matching station found for: {nom}")
-                                cursor.close()
 
+                        cursor.close()
+
+                        # Asignate last known coordinates for stations without position
+                        cursor = database_connection.cursor()
+                        cursor.execute("SELECT station_id, station_nom FROM stations")
+                        stations_in_db = cursor.fetchall()
+                        cursor.close()
+
+                        for station_id, station_nom in stations_in_db:
+                            cursor = database_connection.cursor()
+                            cursor.execute("SELECT * FROM positions WHERE station_id = %s", (station_id,))
+                            if cursor.fetchone() is None:
+                                if station_nom in station_coords and station_coords[station_nom]:
+                                    position_x, position_y = station_coords[station_nom][-1]  # Utiliser la dernière paire de coordonnées
+                                    print(f"Assigning last known coordinates for {station_nom}: {position_x}, {position_y}")
+                                    query = "INSERT INTO positions (station_id, position_x, position_y, nom) VALUES (%s, %s, %s, %s)"
+                                    try:
+                                        cursor.execute(query, (station_id, position_x, position_y, station_nom))
+                                    except mysql.connector.Error as err:
+                                        if err.errno == 1062:
+                                            print(f"Duplicate entry for {station_nom} at {position_x}, {position_y}. Skipping...")
+                                        else:
+                                            raise err
+
+                        cursor.close()
                         database_connection.commit()
+
+                        cursor = database_connection.cursor()
+                        cursor.execute("SELECT station_id, station_nom FROM stations WHERE station_id NOT IN (SELECT station_id FROM positions)")
+                        stations_without_position = cursor.fetchall()
+                        if stations_without_position:
+                            for station_id, station_nom in stations_without_position:
+                                print(f"Station {station_id} ({station_nom}) without position, skipping...")
+                        print(station_coords)
+                        cursor.close()
+
                     except Exception as e:
                         print(f"Error processing pospoints.txt: {e}")
                         database_connection.rollback()
