@@ -3582,7 +3582,6 @@ def dijkstra(start, end, arcs):
         destination = arc["destination"]
         poids = arc["poids"]
         direction = arc["direction"]
-
         # Ajout des arêtes dans les deux sens si le graphe est non orienté
         if origine not in graph:
             graph[origine] = []
@@ -3633,10 +3632,52 @@ def dijkstra(start, end, arcs):
 
     return path, time[end]
 
+
+
+
+def prim(start, arcs):
+    # Création du graphe à partir de la liste d'arcs
+    graph = {}
+    for arc in arcs:
+        origine = arc["origine"]
+        destination = arc["destination"]
+        poids = arc["poids"]
+        
+        if origine not in graph:
+            graph[origine] = []
+        if destination not in graph:
+            graph[destination] = []
+        
+        graph[origine].append((poids, destination))
+        graph[destination].append((poids, origine))  # Graphe non orienté
+    
+    # Initialisation
+    mst = []
+    visited = set([start])
+    edges = [(poids, start, destination) for poids, destination in graph[start]]
+    
+    while edges:
+        # Trouver l'arête avec le poids minimal
+        edges.sort()
+        poids, origine, destination = edges.pop(0)
+        
+        if destination not in visited:
+            visited.add(destination)
+            mst.append((origine, destination, poids))
+            
+            for next_poids, next_destination in graph[destination]:
+                if next_destination not in visited:
+                    edges.append((next_poids, destination, next_destination))
+    
+    return mst
+
+
 start = 17
 end = 320
 arcs = var["arc"]
-
 path, time = dijkstra(start, end, arcs)
-print(f"Chemin le plus court: {path}")
-print(f"Temps: {time}")
+mst = prim(start, arcs)
+print(mst)
+print("Arbre couvrant de poids minimal (MST):")
+for origine, destination, poids in mst:
+    print(f"De {origine} à {destination} avec poids {poids}")
