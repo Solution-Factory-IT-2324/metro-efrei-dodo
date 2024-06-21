@@ -7,7 +7,7 @@ def get_graph_data():
 
     # Fetch Metro stops
     cursor.execute("""
-        SELECT s.stop_id, s.stop_name, s.stop_lat, s.stop_lon, s.zone_id, s.location_type, s.parent_station, r.route_id, r.route_short_name 
+        SELECT s.stop_id, s.stop_name, s.stop_lat, s.stop_lon, s.zone_id, s.location_type, s.parent_station, s.wheelchair_boarding, r.route_id, r.route_short_name 
         FROM stops s
         JOIN stop_times st ON s.stop_id = st.stop_id
         JOIN trips t ON st.trip_id = t.trip_id
@@ -76,6 +76,7 @@ def create_graph(stops, connections, transfers):
                 'location_type': stop.get('location_type'),
                 'parent_station': stop.get('parent_station'),
                 'line': stop.get('route_short_name'),
+                'wheelchair': stop.get('wheelchair_boarding')
             }
 
     # Build edges for connections
