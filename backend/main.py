@@ -31,10 +31,7 @@ match (config.version):
         graph = get_graph_data()
         draw_graph(graph)
     case "V2":
-        from V2.graph import get_graph_data
-
-        graph = get_graph_data()
-        with open(f"{config.version}/graph.txt", "w") as file:
-            file.write(str(graph))
+        from backend.api import app as api
+        api.run(port=config.port, debug=config.debug)
     case "V3":
         pass
