@@ -37,7 +37,7 @@ def fill_data():
                                     station_ligne = parts[1].replace(';', '').strip()
                                     station_est_terminus = parts[2].split(' ')[0].replace(';', '').strip() == 'True'
                                     station_branchement = int(parts[2].split(' ')[-1].replace(';', ''))
-                                    print(station_id, station_nom, station_ligne, station_est_terminus, station_branchement)
+                                    # print(station_id, station_nom, station_ligne, station_est_terminus, station_branchement)
 
                                     # Insert data into database
                                     cursor = database_connection.cursor()
@@ -79,7 +79,7 @@ def fill_data():
                                     station_coords[nom] = []
                                 station_coords[nom].append((position_x, position_y))
 
-                        print(station_coords)
+                        # print(station_coords)
                         # Asignate coordinates to stations
                         cursor = database_connection.cursor()
                         for nom in list(station_coords.keys()):
@@ -92,7 +92,7 @@ def fill_data():
                                     station_id = result[0]
                                     if coords:
                                         position_x, position_y = coords.pop(0) if len(coords) > 1 else coords[-1]
-                                        print([station_id, position_x, position_y, nom])
+                                        # print([station_id, position_x, position_y, nom])
                                         query = "INSERT INTO positions (station_id, position_x, position_y, nom) VALUES (%s, %s, %s, %s)"
                                         try:
                                             cursor.execute(query, (station_id, position_x, position_y, nom))
@@ -135,7 +135,7 @@ def fill_data():
                         if stations_without_position:
                             for station_id, station_nom in stations_without_position:
                                 print(f"Station {station_id} ({station_nom}) without position, skipping...")
-                        print(station_coords)
+                        # print(station_coords)
                         cursor.close()
 
                     except Exception as e:
