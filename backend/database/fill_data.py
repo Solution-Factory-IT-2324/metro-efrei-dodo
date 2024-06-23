@@ -4,10 +4,13 @@ Auteurs: KOCOGLU Lucas
 Description: Ce fichier permet de remplir la base de données, en fonction de la version de l'application.
 Version de Python: 3.12
 """
+
 # Import librairies
 import mysql.connector.errors
 from database.connection import connection
 import config
+from tqdm import tqdm
+import csv
 
 def fill_data():
     try:
@@ -142,7 +145,59 @@ def fill_data():
                     database_connection.close()
                     print(f"Database filled with data. Version: {config.version}")
                 case "V2":
-                    pass
+                    print(f"Filling database {config.db_name} with data from {config.version}")
+                    try:
+                        tables = {
+                            'agency': (
+                            ["agency_id", "agency_name", "agency_url", "agency_timezone", "agency_lang", "agency_phone", "agency_email", "agency_fare_url"], 'V2/agency.txt'),
+                            'calendar': (
+                            ["service_id", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "start_date", "end_date"], 'V2/calendar.txt'),
+                            'calendar_dates': (["service_id", "date", "exception_type"], 'V2/calendar_dates.txt'),
+                            'pathways': (
+                            ["pathway_id", "from_stop_id", "to_stop_id", "pathway_mode", "is_bidirectional", "length", "traversal_time", "stair_count", "max_slope", "min_width", "signposted_as", "reversed_signposted_as"], 'V2/pathways.txt'),
+                            'routes': (
+                            ["route_id", "agency_id", "route_short_name", "route_long_name", "route_desc", "route_type", "route_url", "route_color", "route_text_color", "route_sort_order"], 'V2/routes.txt'),
+                            'stop_extensions': (
+                            ["object_id", "object_system", "object_code"], 'V2/stop_extensions.txt'),
+                            'stop_times': (
+                            ["trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence", "pickup_type", "drop_off_type", "local_zone_id", "stop_headsign", "timepoint"], 'V2/stop_times.txt'),
+                            'stops': (
+                            ['stop_id', 'stop_code', 'stop_name', 'stop_desc', 'stop_lon', 'stop_lat', 'zone_id', 'stop_url', 'location_type', 'parent_station', 'stop_timezone', 'level_id', 'wheelchair_boarding', 'platform_code'], 'V2/stops.txt'),
+                            'transfers': (
+                            ["from_stop_id", "to_stop_id", "transfer_type", "min_transfer_time"], 'V2/transfers.txt'),
+                            'trips': (
+                            ["route_id", "service_id", "trip_id", "trip_headsign", "trip_short_name", "direction_id", "block_id", "shape_id", "wheelchair_accessible", "bikes_allowed"], 'V2/trips.txt')
+                        }
+                        for table, (columns, file_path) in tables.items():
+                            print(f"Processing {table}...")
+                            with open(file_path, "r") as file:
+                                reader = csv.DictReader(file, fieldnames=columns)
+                                # Skip header
+                                next(reader)
+                                for row in tqdm(reader):
+                                    cursor = database_connection.cursor()
+                                    query = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(['%s'] * len(columns))})"
+                                    values = [row[col].strip() if row[col] != '' else None for col in columns]
+                                    cursor.execute(query, values)
+                                    cursor.close()
+
+                        from time import time
+                        start = time()
+                        database_connection.commit()
+                        print(f"Time to commit: {time() - start}")
+
+                        # Create index
+                        cursor = database_connection.cursor()
+                        query = "CREATE INDEX idx_stop_id ON stops (stop_id); CREATE INDEX idx_trip_id ON stop_times (trip_id); CREATE INDEX idx_from_stop_id ON transfers (from_stop_id); CREATE INDEX idx_to_stop_id ON transfers (to_stop_id);"
+                        cursor.execute(query)
+                        cursor.close()
+
+                        database_connection.close()
+                    except Exception as e:
+                        print(f"Error processing data: {e}")
+                        print(row)
+                        print(values)
+                        database_connection.rollback()
                 case "V3":
                     pass
                 case _:

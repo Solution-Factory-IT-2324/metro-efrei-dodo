@@ -9,8 +9,8 @@ from dotenv import load_dotenv
 import os
 
 # Choix de la version
-version = "V1"
-database_name = "MEDV1"
+version = "V2"
+database_name = "MED" + version
 
 # Charge environment variables
 load_dotenv(dotenv_path='.env')
