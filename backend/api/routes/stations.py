@@ -1,5 +1,5 @@
 from flask import Blueprint
-from backend.api.services.data import get_all_metro_stations, get_stations_by_line_metro
+from backend.api.services.data import *
 from backend.api.utils.response import json_response
 from backend.api.utils.cache import get_cache, set_cache
 
@@ -36,3 +36,15 @@ def list_stations_by_line_metro(line_id):
         return json_response(data=stations, message='Success')
     except Exception as e:
         return json_response(message=f"Error getting stations for line {line_id}: {str(e)}", status=500)
+
+
+@bp.route('/wheelchair/<station_id>', methods=['GET'])
+def is_station_wheelchair_accessible(station_id):
+    try:
+        accessibility_info = is_station_accessible(station_id)
+        if accessibility_info is not None:
+            return json_response(data=accessibility_info, message='Success')
+        else:
+            return json_response(message=f"Station {station_id} not found", status=404)
+    except Exception as e:
+        return json_response(message=f"Error checking accessibility for station {station_id}: {str(e)}", status=500)

@@ -93,3 +93,31 @@ def get_stations_by_line_metro(line_id):
         return stations_1
     except Exception as e:
         raise Exception(f"{str(e)}")
+
+
+def is_station_accessible(station_id):
+    try:
+        db_connection = connection()
+        cursor = db_connection.cursor(dictionary=True)
+
+        query = """
+            SELECT wheelchair_boarding 
+            FROM stops 
+            WHERE stop_id = %s
+        """
+        cursor.execute(query, (station_id,))
+        result = cursor.fetchone()
+
+        cursor.close()
+        db_connection.close()
+
+        print(result)
+
+        if result is not None:
+            return {
+                'station_id': station_id,
+                'wheelchair_accessible': result['wheelchair_boarding'] == 1 # Case == 0 treated as False
+            }
+        return None
+    except Exception as e:
+        raise Exception(f"Error checking accessibility for station {station_id}: {str(e)}")
