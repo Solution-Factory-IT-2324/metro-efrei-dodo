@@ -5,7 +5,7 @@ import time
 CACHE_DIR = 'api/services/cache'
 
 
-def get_cache(file_name, max_age_seconds):
+def get_cache(file_name, max_age_seconds=600):
     if not os.path.exists(CACHE_DIR):
         os.makedirs(CACHE_DIR)
 
