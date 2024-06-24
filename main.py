@@ -3652,9 +3652,13 @@ def prim(start, arcs):
         graph[destination].append((poids, origine))  # Graphe non orienté
     
     # Initialisation
-    mst = []
+    tree = []
     visited = set([start])
-    edges = [(poids, start, destination) for poids, destination in graph[start]]
+    edges = []
+    
+    # Ajouter les arêtes initiales connectées au sommet de départ
+    for poids, destination in graph[start]:
+        edges.append((poids, start, destination))
     
     while edges:
         # Trouver l'arête avec le poids minimal
@@ -3663,21 +3667,22 @@ def prim(start, arcs):
         
         if destination not in visited:
             visited.add(destination)
-            mst.append((origine, destination, poids))
+            tree.append((origine, destination, poids))
             
+            # Ajouter les nouvelles arêtes du sommet visité
             for next_poids, next_destination in graph[destination]:
                 if next_destination not in visited:
                     edges.append((next_poids, destination, next_destination))
     
-    return mst
+    return tree
 
 
 start = 17
 end = 320
 arcs = var["arc"]
 path, time = dijkstra(start, end, arcs)
-mst = prim(start, arcs)
-print(mst)
+tree = prim(start, arcs)
+print(tree)
 print("Arbre couvrant de poids minimal (MST):")
-for origine, destination, poids in mst:
+for origine, destination, poids in tree:
     print(f"De {origine} à {destination} avec poids {poids}")
