@@ -1,3 +1,9 @@
+"""
+Projet : FT601 - Mastercamp (Solution Factory) - 2023/2024 - MED : Métro, Efrei, Dodo
+Auteurs: KOCOGLU Lucas
+Description: Ce fichier permet de gérer et de traiter les données avant de le transmettre à l'API
+Version de Python: 3.12
+"""
 from backend.database.connection import connection
 
 
