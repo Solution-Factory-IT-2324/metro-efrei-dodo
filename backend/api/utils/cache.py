@@ -23,8 +23,7 @@ def get_cache(file_name, max_age_seconds=600):
             data = json.load(file)
             return data
     except Exception as e:
-        print(f"Error reading cache file {file_name}: {e}")
-        return None
+        raise Exception(f"Error reading cache file {file_name}: {e}")
 
 
 def set_cache(file_name, data):
