@@ -8,4 +8,13 @@ def run(port=8080, debug=True):
     app.register_blueprint(stations.bp)
     app.register_blueprint(graph.bp)
 
+    # Print all routes
+    output = []
+    for rule in app.url_map.iter_rules():
+        methods = ','.join(sorted(rule.methods))
+        line = f"{rule.endpoint:50s} {methods:20s} {str(rule)}"
+        output.append(line)
+    for out in sorted(output):
+        print(out)
+
     app.run(port=port, debug=debug)
