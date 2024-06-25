@@ -49,4 +49,4 @@ def is_graph_connected(option):
 
 @bp.route('/is_connected/', methods=['GET'])
 def is_graph_connected_default():
-    return is_graph_connected('dfs')
+    return is_graph_connected('bfs')
