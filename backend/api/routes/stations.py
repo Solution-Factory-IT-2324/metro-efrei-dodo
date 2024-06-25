@@ -22,20 +22,20 @@ def list_metro_stations():
         return json_response(message=f"Error getting metro stations: {str(e)}", status=500)
 
 
-@bp.route('/line/metro/<line_id>', methods=['GET'])
-def list_stations_by_line_metro(line_id):
-    cache_file = f'line_stations_{line_id}.json'
+@bp.route('/line/metro/<line_short_name>', methods=['GET'])
+def list_stations_by_line_metro(line_short_name):
+    cache_file = f'line_stations_{line_short_name}.json'
     cache_data = get_cache(cache_file, max_age_seconds=60)
 
     if cache_data is not None:
         return json_response(data=cache_data, message='Success - Cached file used')
 
     try:
-        stations = get_stations_by_line_metro(line_id)
+        stations = get_stations_by_line_metro(line_short_name)
         set_cache(cache_file, stations)
         return json_response(data=stations, message='Success')
     except Exception as e:
-        return json_response(message=f"Error getting stations for line {line_id}: {str(e)}", status=500)
+        return json_response(message=f"Error getting stations for line {line_short_name}: {str(e)}", status=500)
 
 
 @bp.route('/wheelchair/<station_id>', methods=['GET'])
