@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Itinéraire</title>
+    <title>ACPM</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -16,16 +16,17 @@
         </div>
     </header>
     <main>
-        <div id="zone">
-            <input type="text" id="depart" placeholder="Départ">
-            <input type="text" id="destination" placeholder="Arrivé">
-            <button class="button" onclick="callPythonFunction()">C'est parti !</button>
-        </div>
+        <input type="text" id="depart" placeholder="Départ">
+        <input type="text" id="destination" placeholder="Arrivé">
+        <button class="button" onclick="callPythonFunction()">C'est parti !</button>
+
+        <button class="button" onclick="generateAndShowImage()">Générer l'image</button>
+        <img id="generatedImage" src="" alt="Image générée" style="display: none;"/>
     </main>
     <footer>
         <p>&copy; 2024 Mon Nom</p>
     </footer>
-    <script src="script.js"></script>
+    <<script src="script.js"></script>
 </body>
 </html>
 api/line/metro/1
