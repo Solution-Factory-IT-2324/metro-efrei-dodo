@@ -270,3 +270,53 @@ def get_is_graph_connected(graph, option="dfs"):
 
     print(f"Time to check connectivity with {option} : {time() - start:}s")
     return len(visited) == len(vertices)
+
+
+def prim_algorithm(graph):
+    # Initialize the tree and the list of vertices to process
+    tree = {'vertex': {}, 'edge': []}
+    vertices = list(graph['vertex'].keys())
+    if not vertices:
+        return tree
+
+    # Start with the first vertex
+    current_vertex = vertices[0]
+    tree['vertex'][current_vertex] = graph['vertex'][current_vertex]
+    vertices.remove(current_vertex)
+
+    while vertices:
+        print(f"Vertices left: {len(vertices)}")
+        min_edge = None
+        min_weight = float('inf')
+        next_vertex = None
+
+        # Find the smallest edge connecting the current tree to the remaining vertices
+        for vertex in tree['vertex']:
+            for edge in graph['edge']:
+                if edge['from_stop_id'] == vertex and edge['to_stop_id'] in vertices:
+                    if edge['travel_time'] < min_weight:
+                        min_weight = edge['travel_time']
+                        min_edge = edge
+                        next_vertex = edge['to_stop_id']
+                elif edge['to_stop_id'] == vertex and edge['from_stop_id'] in vertices:
+                    if edge['travel_time'] < min_weight:
+                        min_weight = edge['travel_time']
+                        min_edge = edge
+                        next_vertex = edge['from_stop_id']
+
+        if min_edge:
+            # Add the smallest edge and the corresponding vertex to the tree
+            tree['edge'].append(min_edge)
+            tree['vertex'][next_vertex] = graph['vertex'][next_vertex]
+            vertices.remove(next_vertex)
+            # Update current_vertex to ensure the algorithm progresses
+            current_vertex = next_vertex
+        else:
+            # If no edge is found, the graph might be disconnected
+            break
+
+    # Verify if the tree is connected
+    if len(tree['vertex']) != len(graph['vertex']):
+        raise Exception("The graph is not connected")
+
+    return tree

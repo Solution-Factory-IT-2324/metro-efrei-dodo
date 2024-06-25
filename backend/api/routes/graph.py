@@ -2,7 +2,7 @@ import json
 from flask import Blueprint
 from backend.api.utils.response import json_response
 from backend.api.utils.cache import get_cache, set_cache
-from backend.api.services.data import get_graph_data, get_is_graph_connected
+from backend.api.services.data import get_graph_data, get_is_graph_connected, prim_algorithm
 
 bp = Blueprint('graph', __name__, url_prefix='/api/graph')
 
@@ -50,3 +50,34 @@ def is_graph_connected(option):
 @bp.route('/is_connected/', methods=['GET'])
 def is_graph_connected_default():
     return is_graph_connected('bfs')
+
+
+@bp.route('/tree_structure/<option>', methods=['GET'])
+def get_tree_structure(option):
+    try:
+        # Get graph
+        graph_data = get_cache('graph.json', max_age_seconds=25200)
+        if graph_data is None:
+            graph_data = get_graph_data()
+            set_cache("graph.json", graph_data)
+
+        # Check if graph is connected
+        from time import time
+        start = time()
+        match option:
+            case 'prim':
+                tree_structure = prim_algorithm(graph_data)
+            case 'kruskal':
+                tree_structure = None
+            case _:
+                raise ValueError(f"Invalid option: {option}")
+        print(f"Time taken: {time() - start}s")
+        set_cache(f"tree_structure_{option}.json", tree_structure)
+        return json_response(data=tree_structure, message='Success')
+    except Exception as e:
+        return json_response(message=f"Error getting tree structure: {str(e)}", status=500)
+
+
+@bp.route('/tree_structure', methods=['GET'])
+def get_tree_structure_default():
+    return get_tree_structure('prim')
