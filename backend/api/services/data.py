@@ -227,3 +227,46 @@ def get_graph_data():
         graph['edge'].append(edge)
 
     return graph
+
+
+def get_is_graph_connected(graph, option="dfs"):
+    from time import time
+    start = time()
+    def get_neighbors(graph, vertex):
+        neighbors = set()
+        for edge in graph['edge']:
+            if edge['from_stop_id'] == vertex:
+                neighbors.add(edge['to_stop_id'])
+            elif edge['to_stop_id'] == vertex:
+                neighbors.add(edge['from_stop_id'])
+        return neighbors
+    vertices = list(graph['vertex'].keys())
+    if not vertices:
+        return False
+    visited = set()
+
+    match option:
+        case "dfs":
+            # Apply DFS algorithm to check if all vertices are connected
+            stack = [vertices[0]]
+            while stack:
+                vertex = stack.pop()
+                if vertex not in visited:
+                    visited.add(vertex)
+                    stack.extend(neighbor for neighbor in get_neighbors(graph, vertex) if neighbor not in visited)
+        case "bfs":
+            # Apply BFS algorithm to check if all vertices are connected
+            queue = [vertices[0]]
+            while queue:
+                vertex = queue.pop(0)
+                if vertex not in visited:
+                    visited.add(vertex)
+                    neighbors = get_neighbors(graph, vertex)
+                    for neighbor in neighbors:
+                        if neighbor not in visited:
+                            queue.append(neighbor)
+        case _:
+            raise ValueError(f"Invalid option: {option}")
+
+    print(f"Time to check connectivity with {option} : {time() - start:}s")
+    return len(visited) == len(vertices)
