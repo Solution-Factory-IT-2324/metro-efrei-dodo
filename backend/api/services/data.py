@@ -279,13 +279,24 @@ def prim_algorithm(graph):
     if not vertices:
         return tree
 
+    # Mapping of station names to their respective IDs
+    station_name_to_ids = {}
+    for vertex_id, vertex_data in graph['vertex'].items():
+        stop_name = vertex_data['stop_name']
+        if stop_name not in station_name_to_ids:
+            station_name_to_ids[stop_name] = []
+        station_name_to_ids[stop_name].append(vertex_id)
+
+    print(station_name_to_ids)
     # Start with the first vertex
     current_vertex = vertices[0]
-    tree['vertex'][current_vertex] = graph['vertex'][current_vertex]
-    vertices.remove(current_vertex)
+    current_name = graph['vertex'][current_vertex]['stop_name']
+    for vertex_id in station_name_to_ids[current_name]:
+        tree['vertex'][vertex_id] = graph['vertex'][vertex_id]
+        vertices.remove(vertex_id)
 
     while vertices:
-        print(f"Vertices left: {len(vertices)}")
+        # print(f"Vertices left: {len(vertices)}")
         min_edge = None
         min_weight = float('inf')
         next_vertex = None
@@ -307,10 +318,11 @@ def prim_algorithm(graph):
         if min_edge:
             # Add the smallest edge and the corresponding vertex to the tree
             tree['edge'].append(min_edge)
-            tree['vertex'][next_vertex] = graph['vertex'][next_vertex]
-            vertices.remove(next_vertex)
-            # Update current_vertex to ensure the algorithm progresses
-            current_vertex = next_vertex
+            next_name = graph['vertex'][next_vertex]['stop_name']
+            for vertex_id in station_name_to_ids[next_name]:
+                tree['vertex'][vertex_id] = graph['vertex'][vertex_id]
+                if vertex_id in vertices:
+                    vertices.remove(vertex_id)
         else:
             # If no edge is found, the graph might be disconnected
             break
@@ -320,6 +332,7 @@ def prim_algorithm(graph):
         raise Exception("The graph is not connected")
 
     return tree
+
 
 
 def get_all_lines_data():

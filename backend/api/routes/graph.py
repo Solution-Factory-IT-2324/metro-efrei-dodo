@@ -54,6 +54,12 @@ def is_graph_connected_default():
 
 @bp.route('/tree-structure/<option>', methods=['GET'])
 def get_tree_structure(option):
+    cache_file = f'tree_structure_{option}.json'
+    cache_data = get_cache(cache_file, max_age_seconds=25200)
+
+    if cache_data is not None:
+        return json_response(data=cache_data, message='Success - Cached file used')
+
     try:
         # Get graph
         graph_data = get_cache('graph.json', max_age_seconds=25200)
