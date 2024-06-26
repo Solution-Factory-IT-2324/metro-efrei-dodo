@@ -3677,9 +3677,13 @@ def prim(start, arcs):
     return tree
 
 
-start = 17
-end = 320
+start = 363
+end = 16
 arcs = var["arc"]
+stations = var["vertex"]
 path, time = dijkstra(start, end, arcs)
+for i in range(len(path)):
+    station = stations[path[i]]
+    print(station["station_nom"])
 print(path)
 print(time)

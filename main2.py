@@ -1,5 +1,4 @@
 import json
-import heapq
 
 # Charger les données depuis le fichier JSON
 with open('graph.json', 'r') as f:
@@ -9,56 +8,71 @@ with open('graph.json', 'r') as f:
 vertex = data['vertex']
 edges = data['edge']
 
-# Construire le graphe orienté
+# Construire le graphe orienté en excluant les IDFM avec le même stop_name et line
 graph = {}
+visited_stations = set()  # Pour garder une trace des stations déjà ajoutées au graphe
+
 for edge in edges:
     stop_from = edge['from_stop_id']
     stop_to = edge['to_stop_id']
-    time = edge['travel_time']  # Ajustez ici selon les clés correctes
+    time = edge['travel_time']
+    
+    station_from = vertex[stop_from]
+    station_to = vertex[stop_to]
+    
+    # Vérifier si les deux stations ont le même stop_name et line
+    if (station_from['stop_name'], station_from['line']) == (station_to['stop_name'], station_to['line']):
+        continue  # Ignorer cette connexion
+    
+    # Ajouter au graphe si la station de départ n'a pas encore été ajoutée
     if stop_from not in graph:
         graph[stop_from] = []
     graph[stop_from].append((time, stop_to))
-    
-# Fonction pour l'algorithme de Dijkstra
+
 def dijkstra(graph, start, end):
+    # Priority queue implemented as a list
     queue = [(0, start)]
-    distances = {start: 0}
-    previous_nodes = {start: None}
-    visited = set()  # Pour suivre les nœuds visités
-    
+    # Dictionary to store the shortest path to each vertex
+    shortest_paths = {start: (None, 0)}
+    visited = set()
+
     while queue:
-        current_distance, current_node = heapq.heappop(queue)
-        
-        if current_node in visited:
+        # Sort queue to get the element with the smallest cost
+        queue.sort()
+        current_cost, current_vertex = queue.pop(0)
+
+        if current_vertex in visited:
             continue
-        
-        visited.add(current_node)
-        
-        if current_node == end:
+
+        visited.add(current_vertex)
+
+        if current_vertex == end:
             break
-        
-        for neighbor_distance, neighbor in graph.get(current_node, []):
-            distance = current_distance + neighbor_distance
-            if distance < distances.get(neighbor, float('inf')):
-                distances[neighbor] = distance
-                previous_nodes[neighbor] = current_node
-                heapq.heappush(queue, (distance, neighbor))
-    
+
+        for edge_cost, neighbor in graph.get(current_vertex, []):
+            cost = current_cost + edge_cost
+            if neighbor not in shortest_paths or cost < shortest_paths[neighbor][1]:
+                shortest_paths[neighbor] = (current_vertex, cost)
+                queue.append((cost, neighbor))
+
+    # Build the shortest path from start to end
     path = []
-    node = end
-    while node is not None:
-        path.append(node)
-        node = previous_nodes[node]
-    
-    path.reverse()
-    return path, distances[end]
+    current_vertex = end
+    while current_vertex is not None:
+        path.append(current_vertex)
+        next_vertex = shortest_paths[current_vertex][0]
+        current_vertex = next_vertex
+    path = path[::-1]  # Reverse the path
+
+    return path, shortest_paths[path[-1]][1]
 
 # Exemple d'utilisation
-start = 'IDFM:463307'  # Par exemple, VLA
-end = 'IDFM:463067'  # Par exemple, Nation
-path, distance = dijkstra(graph, start, end)
-print(f"Chemin le plus court de {start} à {end}: {path} avec une distance de {distance}")
+start = "IDFM:22400"  # Par exemple, VLA
+end = "IDFM:22010"
+path, cost = dijkstra(graph, start, end)
+print(f"Le plus court chemin de {start} à {end} est {path} avec un temps de {cost/60} min ")
 
-for i in range(len(path)):
-    station = vertex[path[i]]
+# Afficher les noms des stations
+for stop_id in path:
+    station = vertex[stop_id]
     print(station["stop_name"])
