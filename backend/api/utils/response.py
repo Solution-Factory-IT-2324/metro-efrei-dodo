@@ -7,4 +7,9 @@ def json_response(data=None, message='', status=200):
         'message': message,
         'data': data
     }
+
+    if not data:
+        response['message'] = 'No data found'
+        response['status'] = 404
+
     return make_response(jsonify(response), status)
