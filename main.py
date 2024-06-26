@@ -3681,8 +3681,5 @@ start = 17
 end = 320
 arcs = var["arc"]
 path, time = dijkstra(start, end, arcs)
-tree = prim(start, arcs)
-print(tree)
-print("Arbre couvrant de poids minimal (MST):")
-for origine, destination, poids in tree:
-    print(f"De {origine} à {destination} avec poids {poids}")
+print(path)
+print(time)
