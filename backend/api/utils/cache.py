@@ -20,6 +20,8 @@ def get_cache(file_name, max_age_seconds=600):
             return None
 
         with open(file_path, 'r') as file:
+            if os.stat(file_path).st_size == 0:
+                return None
             data = json.load(file)
             return data
     except Exception as e:
