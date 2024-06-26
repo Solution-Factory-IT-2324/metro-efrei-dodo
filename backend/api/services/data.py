@@ -320,3 +320,74 @@ def prim_algorithm(graph):
         raise Exception("The graph is not connected")
 
     return tree
+
+
+def get_all_lines_data():
+    try:
+        db_connection = connection()
+        cursor = db_connection.cursor(dictionary=True)
+
+        query = """
+            SELECT r.route_id, r.agency_id, a.agency_name, r.route_short_name, r.route_long_name, r.route_color, r.route_text_color
+            FROM routes r
+            JOIN agency a ON r.agency_id = a.agency_id
+            WHERE r.route_type = 1
+            ORDER BY r.route_id
+        """
+
+        cursor.execute(query)
+        lines = cursor.fetchall()
+        cursor.close()
+        db_connection.close()
+
+        return lines
+    except Exception as e:
+        raise Exception(f"Error getting metro lines at BDD request : {str(e)}")
+
+
+def get_line_data_by_id(line_id):
+    try:
+        db_connection = connection()
+        cursor = db_connection.cursor(dictionary=True)
+
+        query = """
+            SELECT r.route_id, r.agency_id, a.agency_name, r.route_short_name, r.route_long_name, r.route_color, r.route_text_color
+            FROM routes r
+            JOIN agency a ON r.agency_id = a.agency_id
+            WHERE r.route_type = 1
+            AND r.route_id = %s
+            ORDER BY r.route_id
+        """
+
+        cursor.execute(query, (line_id,))
+        lines = cursor.fetchall()
+        cursor.close()
+        db_connection.close()
+
+        return lines
+    except Exception as e:
+        raise Exception(f"Error getting metro lines at BDD request : {str(e)}")
+
+
+def get_line_data_by_name(line_short_name):
+    try:
+        db_connection = connection()
+        cursor = db_connection.cursor(dictionary=True)
+
+        query = """
+            SELECT r.route_id, r.agency_id, a.agency_name, r.route_short_name, r.route_long_name, r.route_color, r.route_text_color
+            FROM routes r
+            JOIN agency a ON r.agency_id = a.agency_id
+            WHERE r.route_type = 1
+            AND r.route_short_name = %s
+            ORDER BY r.route_id
+        """
+
+        cursor.execute(query, (line_short_name,))
+        lines = cursor.fetchall()
+        cursor.close()
+        db_connection.close()
+
+        return lines
+    except Exception as e:
+        raise Exception(f"Error getting metro lines at BDD request : {str(e)}")
