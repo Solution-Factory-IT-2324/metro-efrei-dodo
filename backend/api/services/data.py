@@ -275,7 +275,7 @@ def get_is_graph_connected(graph, option="dfs"):
 def prim_algorithm(graph):
     # Initialize the tree and the list of vertices to process
     tree = {'vertex': {}, 'edge': []}
-    vertices = list(graph['vertex'].keys())
+    vertices = set(graph['vertex'].keys())
     if not vertices:
         return tree
 
@@ -287,52 +287,65 @@ def prim_algorithm(graph):
             station_name_to_ids[stop_name] = []
         station_name_to_ids[stop_name].append(vertex_id)
 
-    print(station_name_to_ids)
+    def add_edges(vertex):
+        for edge in graph['edge']:
+            if edge['from_stop_id'] == vertex and edge['to_stop_id'] in vertices:
+                priority_queue.append((edge['travel_time'], edge))
+            elif edge['to_stop_id'] == vertex and edge['from_stop_id'] in vertices:
+                priority_queue.append((edge['travel_time'], edge))
+
+    priority_queue = []
+
     # Start with the first vertex
-    current_vertex = vertices[0]
+    current_vertex = list(vertices)[0]
     current_name = graph['vertex'][current_vertex]['stop_name']
     for vertex_id in station_name_to_ids[current_name]:
         tree['vertex'][vertex_id] = graph['vertex'][vertex_id]
         vertices.remove(vertex_id)
+        add_edges(vertex_id)
 
     while vertices:
-        # print(f"Vertices left: {len(vertices)}")
-        min_edge = None
-        min_weight = float('inf')
-        next_vertex = None
+        # Sort the priority queue to get the edge with minimum weight
+        priority_queue.sort(key=lambda x: x[0])
+        if not priority_queue:
+            break
 
-        # Find the smallest edge connecting the current tree to the remaining vertices
-        for vertex in tree['vertex']:
-            for edge in graph['edge']:
-                if edge['from_stop_id'] == vertex and edge['to_stop_id'] in vertices:
-                    if edge['travel_time'] < min_weight:
-                        min_weight = edge['travel_time']
-                        min_edge = edge
-                        next_vertex = edge['to_stop_id']
-                elif edge['to_stop_id'] == vertex and edge['from_stop_id'] in vertices:
-                    if edge['travel_time'] < min_weight:
-                        min_weight = edge['travel_time']
-                        min_edge = edge
-                        next_vertex = edge['from_stop_id']
+        # Get the edge with the smallest weight
+        min_weight, min_edge = priority_queue.pop(0)
+        if min_edge['from_stop_id'] in tree['vertex']:
+            next_vertex = min_edge['to_stop_id']
+        else:
+            next_vertex = min_edge['from_stop_id']
 
-        if min_edge:
+        if next_vertex in vertices:
             # Add the smallest edge and the corresponding vertex to the tree
             tree['edge'].append(min_edge)
             next_name = graph['vertex'][next_vertex]['stop_name']
             for vertex_id in station_name_to_ids[next_name]:
-                tree['vertex'][vertex_id] = graph['vertex'][vertex_id]
                 if vertex_id in vertices:
+                    tree['vertex'][vertex_id] = graph['vertex'][vertex_id]
                     vertices.remove(vertex_id)
-        else:
-            # If no edge is found, the graph might be disconnected
-            break
+                    add_edges(vertex_id)
 
     # Verify if the tree is connected
     if len(tree['vertex']) != len(graph['vertex']):
         raise Exception("The graph is not connected")
 
-    return tree
+    # Re-Mapping of station names to their respective IDs
+    station_name_to_ids = {}
+    for vertex_id, vertex_data in tree['vertex'].items():
+        stop_name = vertex_data['stop_name']
+        if stop_name not in station_name_to_ids:
+            station_name_to_ids[stop_name] = []
+        station_name_to_ids[stop_name].append(vertex_id)
 
+    # print(f"Tree has unique {len(station_name_to_ids)} (by name) stations")
+    # print(f"Graph has {len(graph['vertex'])} vertices and {len(graph['edge'])} edges")
+    # print(f"Tree has {len(tree['vertex'])} vertices and {len(tree['edge'])} edges")
+    # print(f"Total weight of the tree: {sum(edge['travel_time'] for edge in tree['edge'])} seconds")
+    # print("Tree is connected" if get_is_graph_connected(tree) else "Tree is not connected")
+    # print("Tree is a minimum spanning tree" if len(tree['vertex']) - 1 == len(tree['edge']) else "Tree is not a minimum spanning tree")
+    return tree
 
 
 def get_all_lines_data():
