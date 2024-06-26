@@ -2,7 +2,7 @@ import json
 from flask import Blueprint
 from backend.api.utils.response import json_response
 from backend.api.utils.cache import get_cache, set_cache
-from backend.api.services.data import get_graph_data, get_is_graph_connected, prim_algorithm
+from backend.api.services.data import get_graph_data, get_is_graph_connected, prim_algorithm, kruskal_algorithm
 
 bp = Blueprint('graph', __name__, url_prefix='/api/graph')
 
@@ -74,11 +74,11 @@ def get_tree_structure(option):
             case 'prim':
                 tree_structure = prim_algorithm(graph_data)
             case 'kruskal':
-                tree_structure = None
+                tree_structure = kruskal_algorithm(graph_data)
             case _:
                 raise ValueError(f"Invalid option: {option}")
         print(f"Time taken: {time() - start}s")
-        set_cache(f"tree_structure_{option}.json", tree_structure)
+        # set_cache(f"tree_structure_{option}.json", tree_structure)
         return json_response(data=tree_structure, message='Success')
     except Exception as e:
         return json_response(message=f"Error getting tree structure: {str(e)}", status=500)

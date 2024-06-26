@@ -347,6 +347,87 @@ def prim_algorithm(graph):
     # print("Tree is a minimum spanning tree" if len(tree['vertex']) - 1 == len(tree['edge']) else "Tree is not a minimum spanning tree")
     return tree
 
+def kruskal_algorithm(graph):
+    # Initialize the tree and the list of edges to process
+    tree = {'vertex': {}, 'edge': []}
+    vertices = set(graph['vertex'].keys())
+    if not vertices:
+        return tree
+
+    def find(parent, vertex):
+        if parent[vertex] != vertex:
+            parent[vertex] = find(parent, parent[vertex])
+        return parent[vertex]
+
+    def union(parent, rank, root1, root2):
+        if rank[root1] > rank[root2]:
+            parent[root2] = root1
+        elif rank[root1] < rank[root2]:
+            parent[root1] = root2
+        else:
+            parent[root2] = root1
+            rank[root1] += 1
+
+    # Sort all edges in the graph in ascending order of their weight
+    edges = sorted(graph['edge'], key=lambda edge: edge['travel_time'])
+
+    # Initialize the disjoint-set
+    parent = {}
+    rank = {}
+    for vertex in vertices:
+        parent[vertex] = vertex
+        rank[vertex] = 0
+
+    # Mapping of station names to their respective IDs
+    station_name_to_ids = {}
+    for vertex_id, vertex_data in graph['vertex'].items():
+        stop_name = vertex_data['stop_name']
+        if stop_name not in station_name_to_ids:
+            station_name_to_ids[stop_name] = []
+        station_name_to_ids[stop_name].append(vertex_id)
+
+    def unify_same_name_stations(station_name_to_ids):
+        for station_ids in station_name_to_ids.values():
+            if len(station_ids) > 1:
+                root = find(parent, station_ids[0])
+                for vertex_id in station_ids[1:]:
+                    union(parent, rank, root, find(parent, vertex_id))
+
+    # Unify all stations with the same name initially
+    unify_same_name_stations(station_name_to_ids)
+
+    # Iterate through the sorted edges and construct the MST
+    for edge in edges:
+        from_vertex = edge['from_stop_id']
+        to_vertex = edge['to_stop_id']
+        weight = edge['travel_time']
+
+        root1 = find(parent, from_vertex)
+        root2 = find(parent, to_vertex)
+
+        # Add the edge to the tree if it doesn't form a cycle
+        if root1 != root2:
+            tree['edge'].append(edge)
+            union(parent, rank, root1, root2)
+
+            # Add the vertices to the tree
+            if from_vertex not in tree['vertex']:
+                tree['vertex'][from_vertex] = graph['vertex'][from_vertex]
+            if to_vertex not in tree['vertex']:
+                tree['vertex'][to_vertex] = graph['vertex'][to_vertex]
+
+    # Verify if the tree is connected
+    """if len(tree['vertex']) != len(graph['vertex']):
+        raise Exception("The graph is not connected")"""
+
+    # print(f"Tree has unique {len(station_name_to_ids)} (by name) stations")
+    # print(f"Graph has {len(graph['vertex'])} vertices and {len(graph['edge'])} edges")
+    # print(f"Tree has {len(tree['vertex'])} vertices and {len(tree['edge'])} edges")
+    # print(f"Total weight of the tree: {sum(edge['travel_time'] for edge in tree['edge'])} seconds")
+    # print("Tree is connected" if get_is_graph_connected(tree) else "Tree is not connected")
+    # print("Tree is a minimum spanning tree" if len(tree['vertex']) - 1 == len(tree['edge']) else "Tree is not a minimum spanning tree")
+    return tree
+
 
 def get_all_lines_data():
     try:
