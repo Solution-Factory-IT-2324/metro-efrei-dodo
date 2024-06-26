@@ -23,7 +23,7 @@ def get_graph():
         return json_response(message=f"Error getting graph: {str(e)}", status=500)
 
 
-@bp.route('/is_connected/<option>', methods=['GET'])
+@bp.route('/is-connected/<option>', methods=['GET'])
 def is_graph_connected(option):
     # cache_file = 'graph_is_connected.json'
     # cache_data = get_cache(cache_file, max_age_seconds=3660)
@@ -47,12 +47,12 @@ def is_graph_connected(option):
         return json_response(message=f"Error checking graph connectivity: {str(e)}", status=500)
 
 
-@bp.route('/is_connected/', methods=['GET'])
+@bp.route('/is-connected/', methods=['GET'])
 def is_graph_connected_default():
     return is_graph_connected('bfs')
 
 
-@bp.route('/tree_structure/<option>', methods=['GET'])
+@bp.route('/tree-structure/<option>', methods=['GET'])
 def get_tree_structure(option):
     try:
         # Get graph
@@ -78,6 +78,6 @@ def get_tree_structure(option):
         return json_response(message=f"Error getting tree structure: {str(e)}", status=500)
 
 
-@bp.route('/tree_structure', methods=['GET'])
+@bp.route('/tree-structure', methods=['GET'])
 def get_tree_structure_default():
     return get_tree_structure('prim')
