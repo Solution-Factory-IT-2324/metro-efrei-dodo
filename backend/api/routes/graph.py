@@ -84,6 +84,6 @@ def get_tree_structure(option):
         return json_response(message=f"Error getting tree structure: {str(e)}", status=500)
 
 
-@bp.route('/tree-structure', methods=['GET'])
+@bp.route('/tree-structure/', methods=['GET'])
 def get_tree_structure_default():
     return get_tree_structure('prim')
