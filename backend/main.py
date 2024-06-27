@@ -9,29 +9,34 @@ import config
 import database.connection as db
 from backend.database import setup as setup
 
-# Test connection to the database
-test_connection = db.test_connection(db_name=config.db_name)
+if __name__ == "__main__":
+    # Test connection to the database
+    test_connection = db.test_connection(db_name=config.db_name)
 
-# Case if connection is OK
-if test_connection == True:
-    print(f"Connected to MySQL, database \"{config.db_name}\" exists")
-# Case if table db_name does not exist
-elif test_connection == "42000":
-    print(f"Database does not exist, setting up now")
-    setup.setup_database()
-# Other case
-else:
-    print(f"Error connecting to database: Connection failed")
+    # Case if connection is OK
+    if test_connection == True:
+        print(f"Connected to MySQL, database \"{config.db_name}\" exists")
+    # Case if table db_name does not exist
+    elif test_connection == "42000":
+        print(f"Database does not exist, setting up now")
+        from time import time
+        start = time()
+        setup.setup_database()
+        print(f"Database setup in {time()-start} seconds")
+    # Other case
+    else:
+        print(f"Error connecting to database: Connection failed")
 
-match (config.version):
-    case "V1":
-        from V1.graph import get_graph_data
-        from V1.draw import draw_graph
+    match (config.version):
+        case "V1":
+            from V1.graph import get_graph_data
+            from V1.draw import draw_graph
 
-        graph = get_graph_data()
-        draw_graph(graph)
-    case "V2":
-        from backend.api import app as api
-        api.run(port=config.port, debug=config.debug)
-    case "V3":
-        pass
+            graph = get_graph_data()
+            draw_graph(graph)
+        case "V2":
+            from backend.api import app as api
+            api.run(port=config.port, debug=config.debug)
+            pass
+        case "V3":
+            pass
