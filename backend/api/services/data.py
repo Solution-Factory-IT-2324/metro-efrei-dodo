@@ -136,7 +136,7 @@ def get_graph_data():
 
     # Fetch Metro stops
     cursor.execute("""
-        SELECT s.stop_id, s.stop_name, s.stop_lat, s.stop_lon, s.zone_id, s.location_type, s.parent_station, s.wheelchair_boarding, r.route_id, r.route_short_name 
+        SELECT s.stop_id, s.stop_name, s.stop_lat, s.stop_lon, s.zone_id, s.wheelchair_boarding, r.route_id, r.route_type
         FROM stops s
         JOIN stop_times st ON s.stop_id = st.stop_id
         JOIN trips t ON st.trip_id = t.trip_id
@@ -185,46 +185,33 @@ def get_graph_data():
     db_connection.close()
 
     graph = {
-        'vertex': {},
-        'edge': []
+        'vertex': {stop['stop_id']: {
+            'stop_name': stop['stop_name'],
+            'stop_lat': stop['stop_lat'],
+            'stop_lon': stop['stop_lon'],
+            'zone_id': stop.get('zone_id'),
+            'line': stop.get('route_id'),
+            'line_type': stop.get('route_type'),
+            'wheelchair': stop.get('wheelchair_boarding')
+        } for stop in stops},
+        'edge': [
+            {
+                'from_stop_id': conn['from_stop_id'],
+                'to_stop_id': conn['to_stop_id'],
+                'travel_time': conn['travel_time'],
+                'line': conn['route_id'],
+                'type': 'connection'
+            } for conn in connections
+        ] + [
+            {
+                'from_stop_id': transfer['from_stop_id'],
+                'to_stop_id': transfer['to_stop_id'],
+                'travel_time': transfer['min_transfer_time'],
+                'transfer_type': transfer['transfer_type'],
+                'type': 'transfer'
+            } for transfer in transfers
+        ]
     }
-
-    # Build vertex for each stop
-    for stop in stops:
-        stop_id = stop['stop_id']
-        if stop_id not in graph['vertex']:
-            graph['vertex'][stop_id] = {
-                'stop_name': stop['stop_name'],
-                'stop_lat': stop['stop_lat'],
-                'stop_lon': stop['stop_lon'],
-                'zone_id': stop.get('zone_id'),
-                'location_type': stop.get('location_type'),
-                'parent_station': stop.get('parent_station'),
-                'line': stop.get('route_id'),
-                'wheelchair': stop.get('wheelchair_boarding')
-            }
-
-    # Build edges for connections
-    for conn in connections:
-        edge = {
-            'from_stop_id': conn['from_stop_id'],
-            'to_stop_id': conn['to_stop_id'],
-            'travel_time': conn['travel_time'],
-            'line': conn['route_id'],
-            'type': 'connection'
-        }
-        graph['edge'].append(edge)
-
-    # Build edges for transfers
-    for transfer in transfers:
-        edge = {
-            'from_stop_id': transfer['from_stop_id'],
-            'to_stop_id': transfer['to_stop_id'],
-            'travel_time': transfer['min_transfer_time'],
-            'transfer_type': transfer['transfer_type'],
-            'type': 'transfer'
-        }
-        graph['edge'].append(edge)
 
     return graph
 
