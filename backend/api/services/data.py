@@ -491,22 +491,20 @@ def get_line_data_by_name(line_short_name):
 
 
 def dijkstra(graph_data, start_stop_id, end_stop_id):
-    # Extract vertices and edges from the graph data
     vertices = graph_data["vertex"]
     edges = graph_data["edge"]
 
-    # Initialize distances and previous nodes
     distances = {stop_id: float('inf') for stop_id in vertices}
     distances[start_stop_id] = 0
     previous_nodes = {stop_id: None for stop_id in vertices}
 
-    # Priority queue to manage the nodes to explore
+    # Priority queue
     priority_queue = [(0, start_stop_id)]
 
     while priority_queue:
         current_distance, current_stop_id = heapq.heappop(priority_queue)
 
-        # If we reached the destination, reconstruct the path
+        # Destination reached
         if current_stop_id == end_stop_id:
             path = []
             while previous_nodes[current_stop_id]:
@@ -517,15 +515,14 @@ def dijkstra(graph_data, start_stop_id, end_stop_id):
             # Print path and distance, with station name and line
             for i, stop_id in enumerate(path):
                 vertices[stop_id]['line'] = vertices[stop_id].get('line', 'N/A')
-                print(f"{i + 1}. {vertices[stop_id]['stop_name']} ({stop_id}) - Line {vertices[stop_id]['line']}")
+                print(
+                    f"{i + 1}. {vertices[stop_id]['stop_name']} ({stop_id}) - Line {vertices[stop_id]['line']} - Time: {distances[stop_id]}s")
             return path, distances[end_stop_id]
 
-        # If the current distance is greater than the recorded shortest distance, skip
         if current_distance > distances[current_stop_id]:
             continue
 
-        # Get neighbors (connections and transfers)
-        neighbors = get_neighbors(edges, current_stop_id)
+        neighbors = get_neighbors(edges, current_stop_id, vertices)
 
         for neighbor, travel_time in neighbors.items():
             distance = current_distance + travel_time
@@ -537,11 +534,30 @@ def dijkstra(graph_data, start_stop_id, end_stop_id):
     return None  # No path found
 
 
-def get_neighbors(edges, current_stop_id):
+def get_neighbors(edges, current_stop_id, vertices):
     neighbors = {}
+    # Track all stops at the same station
+    same_station_stops = {current_stop_id}
+
+    # Add direct connections and transfers
     for edge in edges:
         if edge["from_stop_id"] == current_stop_id:
             neighbors[edge["to_stop_id"]] = edge["travel_time"]
         elif edge["to_stop_id"] == current_stop_id and edge["type"] == "transfer":
             neighbors[edge["from_stop_id"]] = edge["travel_time"]
+
+        if vertices[edge["from_stop_id"]]["stop_name"] == vertices[current_stop_id]["stop_name"]:
+            same_station_stops.add(edge["from_stop_id"])
+        if vertices[edge["to_stop_id"]]["stop_name"] == vertices[current_stop_id]["stop_name"]:
+            same_station_stops.add(edge["to_stop_id"])
+
+    for stop_id in same_station_stops:
+        if stop_id != current_stop_id:
+            for edge in edges:
+                if (edge["from_stop_id"] == current_stop_id and edge["to_stop_id"] == stop_id) or \
+                        (edge["from_stop_id"] == stop_id and edge["to_stop_id"] == current_stop_id):
+                    if edge["type"] == "transfer":
+                        neighbors[stop_id] = edge["travel_time"]
+                        break
+
     return neighbors
