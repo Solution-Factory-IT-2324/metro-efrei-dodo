@@ -4,6 +4,8 @@ Auteurs: KOCOGLU Lucas
 Description: Ce fichier permet de gérer et de traiter les données avant de le transmettre à l'API
 Version de Python: 3.12
 """
+import heapq
+
 from backend.database.connection import connection
 
 
@@ -486,3 +488,60 @@ def get_line_data_by_name(line_short_name):
         return lines
     except Exception as e:
         raise Exception(f"Error getting metro lines at BDD request : {str(e)}")
+
+
+def dijkstra(graph_data, start_stop_id, end_stop_id):
+    # Extract vertices and edges from the graph data
+    vertices = graph_data["vertex"]
+    edges = graph_data["edge"]
+
+    # Initialize distances and previous nodes
+    distances = {stop_id: float('inf') for stop_id in vertices}
+    distances[start_stop_id] = 0
+    previous_nodes = {stop_id: None for stop_id in vertices}
+
+    # Priority queue to manage the nodes to explore
+    priority_queue = [(0, start_stop_id)]
+
+    while priority_queue:
+        current_distance, current_stop_id = heapq.heappop(priority_queue)
+
+        # If we reached the destination, reconstruct the path
+        if current_stop_id == end_stop_id:
+            path = []
+            while previous_nodes[current_stop_id]:
+                path.insert(0, current_stop_id)
+                current_stop_id = previous_nodes[current_stop_id]
+            path.insert(0, start_stop_id)
+
+            # Print path and distance, with station name and line
+            for i, stop_id in enumerate(path):
+                vertices[stop_id]['line'] = vertices[stop_id].get('line', 'N/A')
+                print(f"{i + 1}. {vertices[stop_id]['stop_name']} ({stop_id}) - Line {vertices[stop_id]['line']}")
+            return path, distances[end_stop_id]
+
+        # If the current distance is greater than the recorded shortest distance, skip
+        if current_distance > distances[current_stop_id]:
+            continue
+
+        # Get neighbors (connections and transfers)
+        neighbors = get_neighbors(edges, current_stop_id)
+
+        for neighbor, travel_time in neighbors.items():
+            distance = current_distance + travel_time
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                previous_nodes[neighbor] = current_stop_id
+                heapq.heappush(priority_queue, (distance, neighbor))
+
+    return None  # No path found
+
+
+def get_neighbors(edges, current_stop_id):
+    neighbors = {}
+    for edge in edges:
+        if edge["from_stop_id"] == current_stop_id:
+            neighbors[edge["to_stop_id"]] = edge["travel_time"]
+        elif edge["to_stop_id"] == current_stop_id and edge["type"] == "transfer":
+            neighbors[edge["from_stop_id"]] = edge["travel_time"]
+    return neighbors

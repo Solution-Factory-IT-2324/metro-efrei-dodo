@@ -2,6 +2,7 @@ from flask import Flask, send_from_directory
 import backend.api.routes.stations as stations
 import backend.api.routes.graph as graph
 import backend.api.routes.line as line
+import backend.api.routes.journey as journey
 
 
 def run(port=8080, debug=True):
@@ -10,6 +11,7 @@ def run(port=8080, debug=True):
     app.register_blueprint(line.bp)
     app.register_blueprint(stations.bp)
     app.register_blueprint(graph.bp)
+    app.register_blueprint(journey.bp)
 
     @app.route('/<path:path>', methods=['GET'])
     def static_proxy(path):
