@@ -18,7 +18,7 @@ def get_all_metro_stations():
             JOIN stop_times st ON s.stop_id = st.stop_id
             JOIN trips t ON st.trip_id = t.trip_id
             JOIN routes r ON t.route_id = r.route_id
-            WHERE r.route_type in (1,2)
+            WHERE r.route_type in (0,1,2)
         """
 
         cursor.execute(query)
@@ -141,7 +141,7 @@ def get_graph_data():
         JOIN stop_times st ON s.stop_id = st.stop_id
         JOIN trips t ON st.trip_id = t.trip_id
         JOIN routes r ON t.route_id = r.route_id
-        WHERE r.route_type in (1,2)  -- Only include Metro routes
+        WHERE r.route_type IN (0, 1, 2)
     """)
     stops = cursor.fetchall()
 
@@ -153,8 +153,8 @@ def get_graph_data():
         JOIN stop_times st2 ON st1.trip_id = st2.trip_id AND st1.stop_sequence + 1 = st2.stop_sequence
         JOIN trips t ON st1.trip_id = t.trip_id
         JOIN routes r ON t.route_id = r.route_id
-        WHERE r.route_type in (1,2)  -- Only include Metro routes
-        GROUP BY from_stop_id, to_stop_id, route_id
+        WHERE r.route_type IN (0, 1, 2)
+        GROUP BY st1.stop_id, st2.stop_id, t.route_id
     """)
     connections = cursor.fetchall()
 
@@ -169,14 +169,14 @@ def get_graph_data():
             FROM stop_times st1
             JOIN trips t1 ON st1.trip_id = t1.trip_id
             JOIN routes r1 ON t1.route_id = r1.route_id
-            WHERE r1.route_type in (1,2) AND st1.stop_id = s1.stop_id
+            WHERE r1.route_type IN (0, 1, 2) AND st1.stop_id = s1.stop_id
         )
         AND EXISTS (
             SELECT 1
             FROM stop_times st2
             JOIN trips t2 ON st2.trip_id = t2.trip_id
             JOIN routes r2 ON t2.route_id = r2.route_id
-            WHERE r2.route_type in (1,2) AND st2.stop_id = s2.stop_id
+            WHERE r2.route_type IN (0, 1, 2) AND st2.stop_id = s2.stop_id
         )
     """)
     transfers = cursor.fetchall()
@@ -214,6 +214,7 @@ def get_graph_data():
     }
 
     return graph
+
 
 
 def get_is_graph_connected(graph, option="dfs"):
@@ -425,7 +426,7 @@ def get_all_lines_data():
             SELECT r.route_id, r.agency_id, a.agency_name, r.route_short_name, r.route_long_name, r.route_color, r.route_text_color
             FROM routes r
             JOIN agency a ON r.agency_id = a.agency_id
-            WHERE r.route_type in (1,2)
+            WHERE r.route_type in (0, 1, 2)
             ORDER BY r.route_id
         """
 
@@ -448,7 +449,7 @@ def get_line_data_by_id(line_id):
             SELECT r.route_id, r.agency_id, a.agency_name, r.route_short_name, r.route_long_name, r.route_color, r.route_text_color
             FROM routes r
             JOIN agency a ON r.agency_id = a.agency_id
-            WHERE r.route_type in (1,2)
+            WHERE r.route_type = 1
             AND r.route_id = %s
             ORDER BY r.route_id
         """
@@ -472,7 +473,7 @@ def get_line_data_by_name(line_short_name):
             SELECT r.route_id, r.agency_id, a.agency_name, r.route_short_name, r.route_long_name, r.route_color, r.route_text_color
             FROM routes r
             JOIN agency a ON r.agency_id = a.agency_id
-            WHERE r.route_type in (1,2)
+            WHERE r.route_type = 1
             AND r.route_short_name = %s
             ORDER BY r.route_id
         """
