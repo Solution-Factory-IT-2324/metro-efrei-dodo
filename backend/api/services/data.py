@@ -136,7 +136,10 @@ def get_graph_data():
     db_connection.start_transaction(isolation_level='READ COMMITTED')
     cursor = db_connection.cursor(dictionary=True)
 
-    # Fetch Metro stops
+    # Fetch Stops
+    from time import time
+    start = time()
+    print("Fetching stops")
     cursor.execute("""
         SELECT s.stop_id, s.stop_name, s.stop_lat, s.stop_lon, s.zone_id, s.wheelchair_boarding, r.route_id, r.route_type
         FROM stops s
@@ -146,21 +149,33 @@ def get_graph_data():
         WHERE r.route_type IN (0, 1, 2)
     """)
     stops = cursor.fetchall()
+    print(f"Time to fetch stops: {time() - start}s")
 
     # Fetch Metro connections with average travel time
+    start = time()
+    print("Fetching connections")
     cursor.execute("""
         SELECT st1.stop_id AS from_stop_id, st2.stop_id AS to_stop_id,
                MAX(TIMESTAMPDIFF(SECOND, st1.departure_time, st2.arrival_time)) AS travel_time, t.route_id
         FROM stop_times st1
-        JOIN stop_times st2 ON st1.trip_id = st2.trip_id AND st1.stop_sequence + 1 = st2.stop_sequence
+        JOIN (
+            SELECT st_inner1.trip_id, st_inner1.stop_sequence, MIN(st_inner2.stop_sequence) AS next_sequence
+            FROM stop_times st_inner1
+            JOIN stop_times st_inner2 ON st_inner1.trip_id = st_inner2.trip_id AND st_inner1.stop_sequence < st_inner2.stop_sequence
+            GROUP BY st_inner1.trip_id, st_inner1.stop_sequence
+        ) AS next_stops ON st1.trip_id = next_stops.trip_id AND st1.stop_sequence = next_stops.stop_sequence
+        JOIN stop_times st2 ON st1.trip_id = st2.trip_id AND next_stops.next_sequence = st2.stop_sequence
         JOIN trips t ON st1.trip_id = t.trip_id
         JOIN routes r ON t.route_id = r.route_id
         WHERE r.route_type IN (0, 1, 2)
         GROUP BY st1.stop_id, st2.stop_id, t.route_id
     """)
     connections = cursor.fetchall()
+    print(f"Time to fetch connections: {time() - start}s")
 
     # Fetch transfers (can be between Metro and other lines, so no filter on route_type)
+    print("Fetching transfers")
+    start = time()
     cursor.execute("""
         SELECT DISTINCT tr.from_stop_id, tr.to_stop_id, tr.transfer_type, tr.min_transfer_time
         FROM transfers tr
@@ -182,6 +197,7 @@ def get_graph_data():
         )
     """)
     transfers = cursor.fetchall()
+    print(f"Time to fetch transfers: {time() - start}s")
 
     cursor.close()
     db_connection.close()
