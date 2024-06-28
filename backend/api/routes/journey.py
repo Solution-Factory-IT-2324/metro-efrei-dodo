@@ -21,7 +21,10 @@ def get_journey_from_to():
         if not start or not end:
             return json_response(message="Start and end points are required", status=400)
 
+        from time import time
+        start_time = time()
         path, distance = dijkstra(graph_data, start, end)
+        print(f"Time taken to calculate path: {time() - start_time}")
         if distance == float('infinity'):
             return json_response(data={'path': path, 'distance': distance}, message='No path found', status=404)
         return json_response(data={'path': path, 'distance': distance}, message='Success')
