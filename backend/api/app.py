@@ -19,6 +19,10 @@ def run(port=8080, debug=True):
     def index():
         return send_from_directory(app.static_folder, 'index.html')
 
+    @app.route('/itineraire', methods=['GET'])
+    def itineraire():
+        return send_from_directory(app.static_folder, 'itineraire.html')
+
     # Print all routes
     output = []
     for rule in app.url_map.iter_rules():

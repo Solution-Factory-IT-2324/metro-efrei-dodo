@@ -20,15 +20,27 @@
             <input type="text" id="depart" placeholder="Départ">
             <input type="text" id="destination" placeholder="Arrivé">
             <button class="button" onclick="callPythonFunction()">C'est parti !</button>
-            <div id="proposition">
-
+            <div id="itineraires">
+                <div id="proposition">
+                    <u>Itinéraire 1</u>
+                    <p>10 min</p>
+                    <p>35g de CO2 émis</p>
+                </div>
+                <div id="proposition">
+                    <u>Itinéraire 2</u>
+                    <p>10 min</p>
+                    <p>35g de CO2 émis</p>
+                </div>
+                <div id="proposition">
+                    <u>Itinéraire 3</u>
+                    <p>10 min</p>
+                    <p>35g de CO2 émis</p>
+                </div>
             </div>
+            <button class="button" onclick="fetchMetroLineData()">Afficher la Ligne de Métro</button>
+            <div id="metroInfo"></div>
         </div>
     </main>
-    <footer>
-        <p>&copy; 2024 Mon Nom</p>
-    </footer>
     <script src="script.js"></script>
 </body>
 </html>
-api/line/metro/1

@@ -4,24 +4,18 @@ body {
     padding: 0;
     background-color: #eeeeee;
 }
+
 header {
     background-color: #ffa43a;
     color: white;
     padding: 10px 0;
     text-align: center;
 }
+
 main {
     padding: 20px;
 }
-footer {
-    background-color: #333;
-    color: white;
-    text-align: center;
-    padding: 10px 0;
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-}
+
 .button {
     display: inline-block;
     padding: 10px 20px;
@@ -86,4 +80,19 @@ footer {
     gap: 10px; /* Espace entre les éléments */
 }
 
+#proposition{
+    background-color: #ffffff;
+    display: flex;
+    width: 200px;
+    font-size: 14px;
+    flex-direction: column;
+    border: #000000 solid 1px;
+}
 
+#itineraires{
+    gap: 10px;
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
