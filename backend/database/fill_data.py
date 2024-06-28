@@ -185,7 +185,9 @@ def fill_data():
                         'trips': (
                             ["route_id", "service_id", "trip_id", "trip_headsign", "trip_short_name", "direction_id",
                              "block_id",
-                             "shape_id", "wheelchair_accessible", "bikes_allowed"], 'V2/trips.txt')
+                             "shape_id", "wheelchair_accessible", "bikes_allowed"], 'V2/trips.txt'),
+                        'emissions': (
+                            ["transport_mode", "id_line", "name_line", "co2e_voy_km_line", "co2e_voy_km_mode", "source", "source_link"], 'V2/emissionCO2.csv')
                     }
 
                     print(f"Filling database {config.db_name} with data from {config.version}")
@@ -235,7 +237,7 @@ def process_table(table, columns, file_path):
         batch_data = []
 
         with open(file_path, "r") as file:
-            reader = csv.DictReader(file, fieldnames=columns)
+            reader = csv.DictReader(file, fieldnames=columns, delimiter=';') if file_path.endswith('.csv') else csv.DictReader(file, fieldnames=columns, delimiter=',')
             next(reader)  # Skip header
 
             for row in tqdm(reader, desc=f"Processing {table}"):

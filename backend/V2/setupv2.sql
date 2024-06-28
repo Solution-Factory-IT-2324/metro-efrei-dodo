@@ -120,3 +120,13 @@ CREATE TABLE IF NOT EXISTS trips (
     wheelchair_accessible TINYINT,
     bikes_allowed TINYINT
 );
+
+CREATE TABLE IF NOT EXISTS emissions (
+    transport_mode VARCHAR(50), -- enum(metro, tram, rail, bus)
+    id_line VARCHAR(50), -- route_id
+    name_line VARCHAR(100), -- route_short_name
+    co2e_voy_km_line DECIMAL(9, 6),
+    co2e_voy_km_mode DECIMAL(9, 6),
+    source VARCHAR(100),
+    source_link VARCHAR(200)
+);
