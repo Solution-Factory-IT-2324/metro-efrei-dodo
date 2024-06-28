@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     L.control.layers(baseLayers).addTo(map);
 
     // Fetch line data to get colors
-    fetch('http://127.0.0.1:8080/api/line/')
+    fetch('http://127.0.0.1:25565/api/line/')
         .then(response => response.json())
         .then(lineData => {
             const lineColors = {};
