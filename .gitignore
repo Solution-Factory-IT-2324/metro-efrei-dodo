@@ -139,3 +139,5 @@ dist
 __pycache__/
 backend/.env
 backend/api/services/cache/*
+backend/V2/*.txt
+backend/V2/txt/*
