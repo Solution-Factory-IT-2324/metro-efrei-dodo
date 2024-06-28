@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Fetch graph data
-            fetch('http://127.0.0.1:25565/api/graph')
+            fetch('http://127.0.0.1:8080/api/graph/')
                 .then(response => response.json())
                 .then(data => {
                     console.log('Graph data:', data);
@@ -36,7 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     edges.forEach(edge => {
                         const fromStation = vertices[edge.from_stop_id];
                         const toStation = vertices[edge.to_stop_id];
-                        if ((fromStation && toStation) && (edge.type !== 'transfer')) {
+                        // if ((fromStation && toStation) && (edge.type !== 'transfer')) {
+                        if ((fromStation && toStation)) {
                             L.polyline([
                                 [fromStation.stop_lat, fromStation.stop_lon],
                                 [toStation.stop_lat, toStation.stop_lon]
@@ -48,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     // Add station circle markers
-                    Object.values(vertices).forEach(station => {
+                    Object.entries(vertices).forEach(([key, station]) => {
                         L.circleMarker([station.stop_lat, station.stop_lon], {
                             radius: 5,  // Adjust size of the circle
                             color: '#98aac3',
@@ -56,9 +57,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             opacity: 0.4,
                             fillOpacity: 1,
                         })
-                        .bindPopup(`<b>${station.stop_name}</b><br>Line: ${station.line}`)
+                        .bindPopup(`<b>${station.stop_name}</b><br>ID: ${key}`)  // Accessing key here
                         .addTo(map);
                     });
+
                 })
                 .catch(error => console.error('Error fetching graph data:', error));
         })

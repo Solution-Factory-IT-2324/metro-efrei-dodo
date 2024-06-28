@@ -4,6 +4,8 @@ Auteurs: KOCOGLU Lucas
 Description: Ce fichier permet de gérer et de traiter les données avant de le transmettre à l'API
 Version de Python: 3.12
 """
+import heapq
+
 from backend.database.connection import connection
 
 
@@ -18,7 +20,7 @@ def get_all_metro_stations():
             JOIN stop_times st ON s.stop_id = st.stop_id
             JOIN trips t ON st.trip_id = t.trip_id
             JOIN routes r ON t.route_id = r.route_id
-            WHERE r.route_type in (1,2)
+            WHERE r.route_type in (0,1,2)
         """
 
         cursor.execute(query)
@@ -136,12 +138,12 @@ def get_graph_data():
 
     # Fetch Metro stops
     cursor.execute("""
-        SELECT s.stop_id, s.stop_name, s.stop_lat, s.stop_lon, s.zone_id, s.location_type, s.parent_station, s.wheelchair_boarding, r.route_id, r.route_short_name 
+        SELECT s.stop_id, s.stop_name, s.stop_lat, s.stop_lon, s.zone_id, s.wheelchair_boarding, r.route_id, r.route_type
         FROM stops s
         JOIN stop_times st ON s.stop_id = st.stop_id
         JOIN trips t ON st.trip_id = t.trip_id
         JOIN routes r ON t.route_id = r.route_id
-        WHERE r.route_type in (1,2)  -- Only include Metro routes
+        WHERE r.route_type IN (0, 1, 2)
     """)
     stops = cursor.fetchall()
 
@@ -153,8 +155,8 @@ def get_graph_data():
         JOIN stop_times st2 ON st1.trip_id = st2.trip_id AND st1.stop_sequence + 1 = st2.stop_sequence
         JOIN trips t ON st1.trip_id = t.trip_id
         JOIN routes r ON t.route_id = r.route_id
-        WHERE r.route_type in (1,2)  -- Only include Metro routes
-        GROUP BY from_stop_id, to_stop_id, route_id
+        WHERE r.route_type IN (0, 1, 2)
+        GROUP BY st1.stop_id, st2.stop_id, t.route_id
     """)
     connections = cursor.fetchall()
 
@@ -169,14 +171,14 @@ def get_graph_data():
             FROM stop_times st1
             JOIN trips t1 ON st1.trip_id = t1.trip_id
             JOIN routes r1 ON t1.route_id = r1.route_id
-            WHERE r1.route_type in (1,2) AND st1.stop_id = s1.stop_id
+            WHERE r1.route_type IN (0, 1, 2) AND st1.stop_id = s1.stop_id
         )
         AND EXISTS (
             SELECT 1
             FROM stop_times st2
             JOIN trips t2 ON st2.trip_id = t2.trip_id
             JOIN routes r2 ON t2.route_id = r2.route_id
-            WHERE r2.route_type in (1,2) AND st2.stop_id = s2.stop_id
+            WHERE r2.route_type IN (0, 1, 2) AND st2.stop_id = s2.stop_id
         )
     """)
     transfers = cursor.fetchall()
@@ -185,48 +187,36 @@ def get_graph_data():
     db_connection.close()
 
     graph = {
-        'vertex': {},
-        'edge': []
+        'vertex': {stop['stop_id']: {
+            'stop_name': stop['stop_name'],
+            'stop_lat': stop['stop_lat'],
+            'stop_lon': stop['stop_lon'],
+            'zone_id': stop.get('zone_id'),
+            'line': stop.get('route_id'),
+            'line_type': stop.get('route_type'),
+            'wheelchair': stop.get('wheelchair_boarding')
+        } for stop in stops},
+        'edge': [
+            {
+                'from_stop_id': conn['from_stop_id'],
+                'to_stop_id': conn['to_stop_id'],
+                'travel_time': conn['travel_time'],
+                'line': conn['route_id'],
+                'type': 'connection'
+            } for conn in connections
+        ] + [
+            {
+                'from_stop_id': transfer['from_stop_id'],
+                'to_stop_id': transfer['to_stop_id'],
+                'travel_time': transfer['min_transfer_time'],
+                'transfer_type': transfer['transfer_type'],
+                'type': 'transfer'
+            } for transfer in transfers
+        ]
     }
 
-    # Build vertex for each stop
-    for stop in stops:
-        stop_id = stop['stop_id']
-        if stop_id not in graph['vertex']:
-            graph['vertex'][stop_id] = {
-                'stop_name': stop['stop_name'],
-                'stop_lat': stop['stop_lat'],
-                'stop_lon': stop['stop_lon'],
-                'zone_id': stop.get('zone_id'),
-                'location_type': stop.get('location_type'),
-                'parent_station': stop.get('parent_station'),
-                'line': stop.get('route_id'),
-                'wheelchair': stop.get('wheelchair_boarding')
-            }
-
-    # Build edges for connections
-    for conn in connections:
-        edge = {
-            'from_stop_id': conn['from_stop_id'],
-            'to_stop_id': conn['to_stop_id'],
-            'travel_time': conn['travel_time'],
-            'line': conn['route_id'],
-            'type': 'connection'
-        }
-        graph['edge'].append(edge)
-
-    # Build edges for transfers
-    for transfer in transfers:
-        edge = {
-            'from_stop_id': transfer['from_stop_id'],
-            'to_stop_id': transfer['to_stop_id'],
-            'travel_time': transfer['min_transfer_time'],
-            'transfer_type': transfer['transfer_type'],
-            'type': 'transfer'
-        }
-        graph['edge'].append(edge)
-
     return graph
+
 
 
 def get_is_graph_connected(graph, option="dfs"):
@@ -438,7 +428,7 @@ def get_all_lines_data():
             SELECT r.route_id, r.agency_id, a.agency_name, r.route_short_name, r.route_long_name, r.route_color, r.route_text_color
             FROM routes r
             JOIN agency a ON r.agency_id = a.agency_id
-            WHERE r.route_type in (1,2)
+            WHERE r.route_type in (0, 1, 2)
             ORDER BY r.route_id
         """
 
@@ -461,7 +451,7 @@ def get_line_data_by_id(line_id):
             SELECT r.route_id, r.agency_id, a.agency_name, r.route_short_name, r.route_long_name, r.route_color, r.route_text_color
             FROM routes r
             JOIN agency a ON r.agency_id = a.agency_id
-            WHERE r.route_type in (1,2)
+            WHERE r.route_type = 1
             AND r.route_id = %s
             ORDER BY r.route_id
         """
@@ -485,7 +475,7 @@ def get_line_data_by_name(line_short_name):
             SELECT r.route_id, r.agency_id, a.agency_name, r.route_short_name, r.route_long_name, r.route_color, r.route_text_color
             FROM routes r
             JOIN agency a ON r.agency_id = a.agency_id
-            WHERE r.route_type in (1,2)
+            WHERE r.route_type = 1
             AND r.route_short_name = %s
             ORDER BY r.route_id
         """
@@ -498,3 +488,76 @@ def get_line_data_by_name(line_short_name):
         return lines
     except Exception as e:
         raise Exception(f"Error getting metro lines at BDD request : {str(e)}")
+
+
+def dijkstra(graph_data, start_stop_id, end_stop_id):
+    vertices = graph_data["vertex"]
+    edges = graph_data["edge"]
+
+    distances = {stop_id: float('inf') for stop_id in vertices}
+    distances[start_stop_id] = 0
+    previous_nodes = {stop_id: None for stop_id in vertices}
+
+    # Priority queue
+    priority_queue = [(0, start_stop_id)]
+
+    while priority_queue:
+        current_distance, current_stop_id = heapq.heappop(priority_queue)
+
+        # Destination reached
+        if current_stop_id == end_stop_id:
+            path = []
+            while previous_nodes[current_stop_id]:
+                path.insert(0, current_stop_id)
+                current_stop_id = previous_nodes[current_stop_id]
+            path.insert(0, start_stop_id)
+
+            # Print path and distance, with station name and line
+            for i, stop_id in enumerate(path):
+                vertices[stop_id]['line'] = vertices[stop_id].get('line', 'N/A')
+                print(
+                    f"{i + 1}. {vertices[stop_id]['stop_name']} ({stop_id}) - Line {vertices[stop_id]['line']} - Time: {distances[stop_id]}s")
+            return path, distances[end_stop_id]
+
+        if current_distance > distances[current_stop_id]:
+            continue
+
+        neighbors = get_neighbors(edges, current_stop_id, vertices)
+
+        for neighbor, travel_time in neighbors.items():
+            distance = current_distance + travel_time
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                previous_nodes[neighbor] = current_stop_id
+                heapq.heappush(priority_queue, (distance, neighbor))
+
+    return None  # No path found
+
+
+def get_neighbors(edges, current_stop_id, vertices):
+    neighbors = {}
+    # Track all stops at the same station
+    same_station_stops = {current_stop_id}
+
+    # Add direct connections and transfers
+    for edge in edges:
+        if edge["from_stop_id"] == current_stop_id:
+            neighbors[edge["to_stop_id"]] = edge["travel_time"]
+        elif edge["to_stop_id"] == current_stop_id and edge["type"] == "transfer":
+            neighbors[edge["from_stop_id"]] = edge["travel_time"]
+
+        if vertices[edge["from_stop_id"]]["stop_name"] == vertices[current_stop_id]["stop_name"]:
+            same_station_stops.add(edge["from_stop_id"])
+        if vertices[edge["to_stop_id"]]["stop_name"] == vertices[current_stop_id]["stop_name"]:
+            same_station_stops.add(edge["to_stop_id"])
+
+    for stop_id in same_station_stops:
+        if stop_id != current_stop_id:
+            for edge in edges:
+                if (edge["from_stop_id"] == current_stop_id and edge["to_stop_id"] == stop_id) or \
+                        (edge["from_stop_id"] == stop_id and edge["to_stop_id"] == current_stop_id):
+                    if edge["type"] == "transfer":
+                        neighbors[stop_id] = edge["travel_time"]
+                        break
+
+    return neighbors
