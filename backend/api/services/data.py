@@ -425,7 +425,7 @@ def get_all_lines_data():
         cursor = db_connection.cursor(dictionary=True)
 
         query = """
-            SELECT r.route_id, r.agency_id, a.agency_name, r.route_short_name, r.route_long_name, r.route_color, r.route_text_color
+            SELECT r.route_id, r.agency_id, a.agency_name, r.route_short_name, r.route_long_name, r.route_color, r.route_text_color, r.route_type
             FROM routes r
             JOIN agency a ON r.agency_id = a.agency_id
             WHERE r.route_type in (0, 1, 2)
@@ -448,7 +448,7 @@ def get_line_data_by_id(line_id):
         cursor = db_connection.cursor(dictionary=True)
 
         query = """
-            SELECT r.route_id, r.agency_id, a.agency_name, r.route_short_name, r.route_long_name, r.route_color, r.route_text_color
+            SELECT r.route_id, r.agency_id, a.agency_name, r.route_short_name, r.route_long_name, r.route_color, r.route_text_color, r.route_type
             FROM routes r
             JOIN agency a ON r.agency_id = a.agency_id
             WHERE r.route_type = 1
@@ -472,7 +472,7 @@ def get_line_data_by_name(line_short_name):
         cursor = db_connection.cursor(dictionary=True)
 
         query = """
-            SELECT r.route_id, r.agency_id, a.agency_name, r.route_short_name, r.route_long_name, r.route_color, r.route_text_color
+            SELECT r.route_id, r.agency_id, a.agency_name, r.route_short_name, r.route_long_name, r.route_color, r.route_text_color, r.route_type
             FROM routes r
             JOIN agency a ON r.agency_id = a.agency_id
             WHERE r.route_type = 1
