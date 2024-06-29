@@ -10,7 +10,7 @@ bp = Blueprint('graph', __name__, url_prefix='/api/graph')
 @bp.route('/', methods=['GET'])
 def get_graph():
     cache_file = 'graph.json'
-    cache_data = get_cache(cache_file, max_age_seconds=25200)
+    cache_data = get_cache(cache_file, max_age_seconds=604800)
 
     if cache_data is not None:
         return json_response(data=cache_data, message='Success - Cached file used')
@@ -33,7 +33,7 @@ def is_graph_connected(option):
 
     try:
         # Get graph
-        graph_data = get_cache('graph.json', max_age_seconds=25200)
+        graph_data = get_cache('graph.json', max_age_seconds=604800)
         if graph_data is None:
             graph_data = get_graph_data()
             set_cache("graph.json", graph_data)
@@ -55,14 +55,14 @@ def is_graph_connected_default():
 @bp.route('/tree-structure/<option>', methods=['GET'])
 def get_tree_structure(option):
     cache_file = f'tree_structure_{option}.json'
-    cache_data = get_cache(cache_file, max_age_seconds=25200)
+    cache_data = get_cache(cache_file, max_age_seconds=604800)
 
     if cache_data is not None:
         return json_response(data=cache_data, message='Success - Cached file used')
 
     try:
         # Get graph
-        graph_data = get_cache('graph.json', max_age_seconds=25200)
+        graph_data = get_cache('graph.json', max_age_seconds=604800)
         if graph_data is None:
             graph_data = get_graph_data()
             set_cache("graph.json", graph_data)
