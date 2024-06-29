@@ -1,6 +1,7 @@
 from flask import Blueprint, request
-from backend.api.services.data import dijkstra
-from backend.api.utils.cache import get_cache
+from uuid import uuid4
+from backend.api.services.data import dijkstra, emission_calculator, get_emission_factors
+from backend.api.utils.cache import get_cache, set_cache
 from backend.api.utils.response import json_response
 
 bp = Blueprint('journey', __name__, url_prefix='/api/journey')
@@ -10,7 +11,7 @@ bp = Blueprint('journey', __name__, url_prefix='/api/journey')
 def get_journey_from_to():
     # Load graph from cache
     cache_file = 'graph.json'
-    graph_data = get_cache(cache_file, max_age_seconds=25200)
+    graph_data = get_cache(cache_file, max_age_seconds=604800)
 
     if graph_data is None:
         return json_response(message='Graph data not available', status=500)
@@ -27,6 +28,10 @@ def get_journey_from_to():
         print(f"Time taken to calculate path: {time() - start_time}")
         if distance == float('infinity'):
             return json_response(data={'path': path, 'distance': distance}, message='No path found', status=404)
-        return json_response(data={'path': path, 'distance': distance}, message='Success')
+
+        # Generate ID for journey calculated
+        journey_id = f"journey-{uuid4()}.json"
+        set_cache(journey_id, {'path': path, 'distance': distance, 'journey_id': journey_id})
+        return json_response(data={'path': path, 'distance': distance, 'journey_id': journey_id}, message='Success')
     except Exception as e:
         return json_response(message=f"Error calculating journey: {str(e)}", status=500)
