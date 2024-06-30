@@ -5,6 +5,7 @@ Description: Ce fichier permet de gérer et de traiter les données avant de le 
 Version de Python: 3.12
 """
 import heapq
+from datetime import datetime, timedelta
 
 from backend.database.connection import connection
 
@@ -124,7 +125,7 @@ def is_station_accessible(station_id):
         if result is not None:
             return {
                 'station_id': station_id,
-                'wheelchair_accessible': result['wheelchair_boarding'] == 1 # Case == 0 treated as False
+                'wheelchair_accessible': result['wheelchair_boarding'] == 1  # Case == 0 treated as False
             }
         return None
     except Exception as e:
@@ -213,31 +214,31 @@ def get_graph_data():
             'wheelchair': stop.get('wheelchair_boarding')
         } for stop in stops},
         'edge': [
-            {
-                'from_stop_id': conn['from_stop_id'],
-                'to_stop_id': conn['to_stop_id'],
-                'travel_time': conn['travel_time'],
-                'line': conn['route_id'],
-                'type': 'connection'
-            } for conn in connections
-        ] + [
-            {
-                'from_stop_id': transfer['from_stop_id'],
-                'to_stop_id': transfer['to_stop_id'],
-                'travel_time': transfer['min_transfer_time'],
-                'transfer_type': transfer['transfer_type'],
-                'type': 'transfer'
-            } for transfer in transfers
-        ]
+                    {
+                        'from_stop_id': conn['from_stop_id'],
+                        'to_stop_id': conn['to_stop_id'],
+                        'travel_time': conn['travel_time'],
+                        'line': conn['route_id'],
+                        'type': 'connection'
+                    } for conn in connections
+                ] + [
+                    {
+                        'from_stop_id': transfer['from_stop_id'],
+                        'to_stop_id': transfer['to_stop_id'],
+                        'travel_time': transfer['min_transfer_time'],
+                        'transfer_type': transfer['transfer_type'],
+                        'type': 'transfer'
+                    } for transfer in transfers
+                ]
     }
 
     return graph
 
 
-
 def get_is_graph_connected(graph, option="dfs"):
     from time import time
     start = time()
+
     def get_neighbors(graph, vertex):
         neighbors = set()
         for edge in graph['edge']:
@@ -246,6 +247,7 @@ def get_is_graph_connected(graph, option="dfs"):
             elif edge['to_stop_id'] == vertex:
                 neighbors.add(edge['from_stop_id'])
         return neighbors
+
     vertices = list(graph['vertex'].keys())
     if not vertices:
         return False
@@ -352,6 +354,7 @@ def prim_algorithm(graph):
     # print("Tree is connected" if get_is_graph_connected(tree) else "Tree is not connected")
     # print("Tree is a minimum spanning tree" if len(tree['vertex']) - 1 == len(tree['edge']) else "Tree is not a minimum spanning tree")
     return tree
+
 
 def kruskal_algorithm(graph):
     # Initialize the tree and the list of edges to process
@@ -506,50 +509,6 @@ def get_line_data_by_name(line_short_name):
         raise Exception(f"Error getting metro lines at BDD request : {str(e)}")
 
 
-def dijkstra(graph_data, start_stop_id, end_stop_id):
-    vertices = graph_data["vertex"]
-    edges = graph_data["edge"]
-
-    distances = {stop_id: float('inf') for stop_id in vertices}
-    distances[start_stop_id] = 0
-    previous_nodes = {stop_id: None for stop_id in vertices}
-
-    # Priority queue
-    priority_queue = [(0, start_stop_id)]
-
-    while priority_queue:
-        current_distance, current_stop_id = heapq.heappop(priority_queue)
-
-        # Destination reached
-        if current_stop_id == end_stop_id:
-            path = []
-            while previous_nodes[current_stop_id]:
-                path.insert(0, current_stop_id)
-                current_stop_id = previous_nodes[current_stop_id]
-            path.insert(0, start_stop_id)
-
-            # Print path and distance, with station name and line
-            for i, stop_id in enumerate(path):
-                vertices[stop_id]['line'] = vertices[stop_id].get('line', 'N/A')
-                print(
-                    f"{i + 1}. {vertices[stop_id]['stop_name']} ({stop_id}) - Line {vertices[stop_id]['line']} - Time: {distances[stop_id]}s")
-            return path, distances[end_stop_id]
-
-        if current_distance > distances[current_stop_id]:
-            continue
-
-        neighbors = get_neighbors(edges, current_stop_id, vertices)
-
-        for neighbor, travel_time in neighbors.items():
-            distance = current_distance + travel_time
-            if distance < distances[neighbor]:
-                distances[neighbor] = distance
-                previous_nodes[neighbor] = current_stop_id
-                heapq.heappush(priority_queue, (distance, neighbor))
-
-    return None  # No path found
-
-
 def get_neighbors(edges, current_stop_id, vertices):
     neighbors = {}
     # Track all stops at the same station
@@ -558,9 +517,9 @@ def get_neighbors(edges, current_stop_id, vertices):
     # Add direct connections and transfers
     for edge in edges:
         if edge["from_stop_id"] == current_stop_id:
-            neighbors[edge["to_stop_id"]] = edge["travel_time"]
+            neighbors[edge["to_stop_id"]] = (edge["travel_time"], vertices[edge["to_stop_id"]]['line'])
         elif edge["to_stop_id"] == current_stop_id and edge["type"] == "transfer":
-            neighbors[edge["from_stop_id"]] = edge["travel_time"]
+            neighbors[edge["from_stop_id"]] = (edge["travel_time"], vertices[edge["from_stop_id"]]['line'])
 
         if vertices[edge["from_stop_id"]]["stop_name"] == vertices[current_stop_id]["stop_name"]:
             same_station_stops.add(edge["from_stop_id"])
@@ -573,7 +532,7 @@ def get_neighbors(edges, current_stop_id, vertices):
                 if (edge["from_stop_id"] == current_stop_id and edge["to_stop_id"] == stop_id) or \
                         (edge["from_stop_id"] == stop_id and edge["to_stop_id"] == current_stop_id):
                     if edge["type"] == "transfer":
-                        neighbors[stop_id] = edge["travel_time"]
+                        neighbors[stop_id] = (edge["travel_time"], vertices[stop_id]['line'])
                         break
 
     return neighbors
@@ -663,3 +622,150 @@ def get_emission_factors():
     cursor.close()
     db_connection.close()
     return emission_factors
+
+
+def update_graph_with_real_time(graph_data, date_set):
+    db_connection = connection()
+    cursor = db_connection.cursor(dictionary=True)
+
+    query = """
+    SELECT st.trip_id, st.arrival_time, st.departure_time, st.stop_id, t.route_id, t.service_id
+    FROM stop_times st
+    JOIN trips t ON st.trip_id = t.trip_id
+    JOIN calendar c ON t.service_id = c.service_id
+    WHERE c.start_date <= %s AND c.end_date >= %s
+    AND (
+        (c.monday = 1 AND DAYOFWEEK(%s) = 2) OR
+        (c.tuesday = 1 AND DAYOFWEEK(%s) = 3) OR
+        (c.wednesday = 1 AND DAYOFWEEK(%s) = 4) OR
+        (c.thursday = 1 AND DAYOFWEEK(%s) = 5) OR
+        (c.friday = 1 AND DAYOFWEEK(%s) = 6) OR
+        (c.saturday = 1 AND DAYOFWEEK(%s) = 7) OR
+        (c.sunday = 1 AND DAYOFWEEK(%s) = 1)
+    )
+    """
+
+    date = date_set.date()
+    cursor.execute(query, (date, date, date, date, date, date, date, date, date))
+    real_time_data = cursor.fetchall()
+
+    cursor.close()
+    db_connection.close()
+
+    for record in real_time_data:
+        trip_id = record['trip_id']
+        arrival_time = record['arrival_time']
+        departure_time = record['departure_time']
+        stop_id = record['stop_id']
+        route_id = record['route_id']
+
+        # Convert arrival and departure times to seconds from midnight for easier comparison
+        if isinstance(arrival_time, timedelta):
+            arrival_seconds = arrival_time.total_seconds()
+        else:
+            arrival_seconds = arrival_time.hour * 3600 + arrival_time.minute * 60 + arrival_time.second
+
+        if isinstance(departure_time, timedelta):
+            departure_seconds = departure_time.total_seconds()
+        else:
+            departure_seconds = departure_time.hour * 3600 + departure_time.minute * 60 + departure_time.second
+
+        # Update the graph_data with real-time stop_times
+        if stop_id in graph_data['vertex']:
+            if 'real_time' not in graph_data['vertex'][stop_id]:
+                graph_data['vertex'][stop_id]['real_time'] = {}
+
+            if route_id not in graph_data['vertex'][stop_id]['real_time']:
+                graph_data['vertex'][stop_id]['real_time'][route_id] = {}
+
+            graph_data['vertex'][stop_id]['real_time'][route_id][trip_id] = {
+                'arrival_time': arrival_seconds,
+                'departure_time': departure_seconds
+            }
+
+    return graph_data
+
+
+def preprocess_real_time_data(vertices):
+    real_time_lookup = {}
+    for stop_id, stop_data in vertices.items():
+        if 'real_time' in stop_data:
+            if stop_id not in real_time_lookup:
+                real_time_lookup[stop_id] = []
+            for line_id, trips in stop_data['real_time'].items():
+                for trip_id, times in trips.items():
+                    if 'departure_time' in times:
+                        real_time_lookup[stop_id].append(times['departure_time'])
+            real_time_lookup[stop_id].sort()
+    return real_time_lookup
+
+
+def dijkstra(graph_data, start_stop_id, end_stop_id, current_datetime=None):
+    vertices = graph_data["vertex"]
+    edges = graph_data["edge"]
+
+    if current_datetime is None:
+        current_datetime = datetime.now()
+
+    current_time_seconds = current_datetime.hour * 3600 + current_datetime.minute * 60 + current_datetime.second
+
+    real_time_lookup = preprocess_real_time_data(vertices)
+
+    distances = {stop_id: float('inf') for stop_id in vertices}
+    distances[start_stop_id] = 0
+    previous_nodes = {stop_id: None for stop_id in vertices}
+    arrival_times = {stop_id: float('inf') for stop_id in vertices}
+    arrival_times[start_stop_id] = current_time_seconds
+    current_lines = {stop_id: None for stop_id in vertices}
+
+    # Priority queue
+    priority_queue = [(0, start_stop_id, current_time_seconds, None)]
+
+    while priority_queue:
+        current_distance, current_stop_id, current_arrival_time, current_line = heapq.heappop(priority_queue)
+
+        # Destination reached
+        if current_stop_id == end_stop_id:
+            path = []
+            while previous_nodes[current_stop_id]:
+                path.insert(0, current_stop_id)
+                current_stop_id = previous_nodes[current_stop_id]
+            path.insert(0, start_stop_id)
+
+            # Print path and distance, with station name and line
+            for i, stop_id in enumerate(path):
+                vertices[stop_id]['line'] = vertices[stop_id].get('line', 'N/A')
+                print(
+                    f"{i + 1}. {vertices[stop_id]['stop_name']} ({stop_id}) - Line {vertices[stop_id]['line']} - Time: {distances[stop_id]}s at Hour: {arrival_times[stop_id] // 3600}h{arrival_times[stop_id] % 3600 // 60}m{arrival_times[stop_id] % 60}s ({arrival_times[stop_id]})")
+            return path, distances[end_stop_id]
+
+        if current_distance > distances[current_stop_id]:
+            continue
+
+        neighbors = get_neighbors(edges, current_stop_id, vertices)
+
+        for neighbor, (travel_time, neighbor_line) in neighbors.items():
+            wait_time = 0
+
+            # Check for line change
+            if neighbor_line != current_line and current_stop_id in real_time_lookup:
+                next_departure_time = float('inf')
+                for departure_time in real_time_lookup[current_stop_id]:
+                    if current_arrival_time <= departure_time < next_departure_time:
+                        next_departure_time = departure_time
+                        break
+
+                if next_departure_time < float('inf'):
+                    wait_time = next_departure_time - current_arrival_time
+                else:
+                    continue  # No valid departure time found
+
+            # Calculate total distance including wait time and travel time
+            distance = current_distance + travel_time + wait_time
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                previous_nodes[neighbor] = current_stop_id
+                arrival_times[neighbor] = current_arrival_time + travel_time + wait_time
+                heapq.heappush(priority_queue, (distance, neighbor, arrival_times[neighbor], neighbor_line))
+
+    return None  # No path found

@@ -1,6 +1,7 @@
 from flask import Blueprint, request
 from uuid import uuid4
-from backend.api.services.data import dijkstra, emission_calculator, get_emission_factors
+from datetime import datetime
+from backend.api.services.data import dijkstra, emission_calculator, get_emission_factors, update_graph_with_real_time
 from backend.api.utils.cache import get_cache, set_cache
 from backend.api.utils.response import json_response
 
@@ -10,21 +11,35 @@ bp = Blueprint('journey', __name__, url_prefix='/api/journey')
 @bp.route('/', methods=['POST'])
 def get_journey_from_to():
     # Load graph from cache
-    cache_file = 'graph.json'
-    graph_data = get_cache(cache_file, max_age_seconds=604800)
-
+    graph_data = get_cache('graph.json', max_age_seconds=604800)
     if graph_data is None:
         return json_response(message='Graph data not available', status=500)
 
     try:
         data = request.get_json()
         start, end = data.get('start_vertex'), data.get('end_vertex')
+        datetime_str = data.get('date')
         if not start or not end:
             return json_response(message="Start and end points are required", status=400)
 
+        # Parse datetime if provided
+        if datetime_str:
+            current_datetime = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
+        else:
+            current_datetime = datetime.now()
+
+        test = str(current_datetime)
+        # Update graph with real-time data
+        cache_file = 'graph_real_time.json'
+        graph_data_realtime = get_cache(cache_file, max_age_seconds=604800)
+
+        if graph_data_realtime is None:
+            graph_data_realtime = update_graph_with_real_time(graph_data, current_datetime)
+            set_cache(cache_file, graph_data_realtime)
+
         from time import time
         start_time = time()
-        path, distance = dijkstra(graph_data, start, end)
+        path, distance = dijkstra(graph_data_realtime, start, end, current_datetime)
         print(f"Time taken to calculate path: {time() - start_time}")
         if distance == float('infinity'):
             return json_response(data={'path': path, 'distance': distance}, message='No path found', status=404)
