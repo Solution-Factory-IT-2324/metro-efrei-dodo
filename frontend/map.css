@@ -33,7 +33,7 @@ html, body {
 
 #filters {
     position: absolute;
-    top: 10px; /* Changed from bottom to top */
+    top: 10px;
     left: 10px;
     background: white;
     padding: 10px;
@@ -52,8 +52,20 @@ html, body {
     cursor: pointer;
     border-radius: 3px;
     font-size: 16px;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 #filters button:hover {
     background: #e0e0e0;
 }
+
+#filters button.active {
+    background: #007bff;
+    color: #ffffff;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+#filters button.active:hover {
+    background: #0056b3;
+}
+

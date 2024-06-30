@@ -32,7 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
             fetch('http://127.0.0.1:8080/api/graph/')
                 .then(response => response.json())
                 .then(graphData => {
-                    console.log('Graph data:', graphData);
                     const vertices = graphData.data.vertex;
                     const edges = graphData.data.edge;
 
@@ -52,7 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     fetch('http://127.0.0.1:8080/traces-du-reseau-ferre-idf.json')
                         .then(response => response.json())
                         .then(tracesData => {
-                            console.log('Traces data:', tracesData);
                             const records = tracesData;
 
                             // Function to add connections between stations
@@ -145,7 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                         Accessible PMR : ${station.wheelchair === 1 ? 'Oui' : 'Non'}
                                     `)
                                     .addTo(map);
-                                    console.log(station.wheelchair, station.stop_name)
                                     circleMarkers.push(marker);
                                 });
 
@@ -171,18 +168,20 @@ document.addEventListener('DOMContentLoaded', () => {
                                 });
                             };
 
-                            // Add all stations initially
-                            addStations();
-
                             // Function to update connections based on filter states
                             const updateConnections = () => {
                                 clearMap();
                                 addStations();
                                 if (filterActiveTrain) addConnections(mode => mode === 'TRAIN');
+                                toggleButtonActiveState('filter-train', filterActiveTrain);
                                 if (filterActiveTramway) addConnections(mode => mode === 'TRAMWAY');
+                                toggleButtonActiveState('filter-tramway', filterActiveTramway);
                                 if (filterActiveMetro) addConnections(mode => mode === 'METRO');
+                                toggleButtonActiveState('filter-metro', filterActiveMetro);
                                 if (filterActiveRER) addConnections(mode => mode === 'RER');
+                                toggleButtonActiveState('filter-rer', filterActiveRER);
                                 if (filterActiveTER) addConnections(mode => mode === 'TER');
+                                toggleButtonActiveState('filter-ter', filterActiveTER);
                             };
 
                             // Create boolean filter functions for each route type
@@ -191,6 +190,15 @@ document.addEventListener('DOMContentLoaded', () => {
                             let filterActiveMetro = true;
                             let filterActiveRER = true;
                             let filterActiveTER = true;
+
+                            const toggleButtonActiveState = (buttonId, isActive) => {
+                                const button = document.getElementById(buttonId);
+                                if (isActive) {
+                                    button.classList.add('active');
+                                } else {
+                                    button.classList.remove('active');
+                                }
+                            };
 
                             // Add event listeners to filter buttons
                             document.getElementById('filter-train').addEventListener('click', () => {
@@ -217,6 +225,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 filterActiveTER = !filterActiveTER;
                                 updateConnections();
                             });
+
+                            // Add all stations initially
+                            addStations();
 
                             // Add all connections initially
                             updateConnections();
