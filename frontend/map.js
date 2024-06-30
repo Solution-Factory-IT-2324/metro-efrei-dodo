@@ -201,6 +201,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 toggleButtonActiveState('filter-rer', filterActiveRER);
                                 if (filterActiveTER) addConnections(mode => mode === 'TER');
                                 toggleButtonActiveState('filter-ter', filterActiveTER);
+                                if (filterActiveTransfer) drawTransfers();
+                                toggleButtonActiveState('station-connections', filterActiveTransfer);
                             };
 
                             // Create boolean filter functions for each route type
@@ -209,6 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             let filterActiveMetro = true;
                             let filterActiveRER = true;
                             let filterActiveTER = true;
+                            let filterActiveTransfer = true;
 
                             const toggleButtonActiveState = (buttonId, isActive) => {
                                 const button = document.getElementById(buttonId);
@@ -245,13 +248,19 @@ document.addEventListener('DOMContentLoaded', () => {
                                 updateConnections();
                             });
 
+                            document.getElementById('station-connections').addEventListener('click', () => {
+                                filterActiveTransfer = !filterActiveTransfer;
+                                updateConnections();
+                            });
+
                             // Add all stations initially
                             addStations();
 
                             // Add all connections initially
                             updateConnections();
 
-                            // drawTransfers();
+                            // Draw transfers
+                            drawTransfers();
 
                         })
                         .catch(error => console.error('Error fetching traces data:', error));
