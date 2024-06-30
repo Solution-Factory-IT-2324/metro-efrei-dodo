@@ -31,10 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Fetch graph data
             fetch('http://127.0.0.1:8080/api/graph/')
                 .then(response => response.json())
-                .then(data => {
-                    console.log('Graph data:', data);
-                    const vertices = data.data.vertex;
-                    const edges = data.data.edge;
+                .then(graphData => {
+                    console.log('Graph data:', graphData);
+                    const vertices = graphData.data.vertex;
+                    const edges = graphData.data.edge;
 
                     // Create a mapping of station IDs to line names
                     const stationLines = {};
@@ -48,139 +48,177 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
 
-                    // Function to add connections between stations
-                    const addConnections = (filterFn) => {
-                        edges.forEach(edge => {
-                            const fromStation = vertices[edge.from_stop_id];
-                            const toStation = vertices[edge.to_stop_id];
-                            if ((fromStation && toStation) && (edge.type !== 'transfer')) {
-                                if (filterFn(lineTypes[edge.line])) {
-                                    let color = lineColors[edge.line] || 'blue';
+                    // Fetch traces data from the Ile-de-France Mobilités dataset
+                    fetch('http://127.0.0.1:8080/traces-du-reseau-ferre-idf.json')
+                        .then(response => response.json())
+                        .then(tracesData => {
+                            console.log('Traces data:', tracesData);
+                            const records = tracesData;
+
+                            // Function to add connections between stations
+                            const addConnections = (filterFn) => {
+                                const layers = [];
+                                records.forEach(record => {
+                                    const fields = record;
+                                    const coordinates = fields.geo_shape.geometry.coordinates;
+
+                                    let color = lineColors['IDFM:' + fields.idrefligc] || 'blue';
+                                    if (color === 'blue') {
+                                        color = lineColors['IDFM:' + fields.idrefligc.replace('T', 'B')]
+                                    }
                                     let weight = 5;
                                     let dashArray = '';
 
                                     // Change design based on route_type
-                                    switch (lineTypes[edge.line]) {
-                                        case 0:
+                                    switch (fields.mode) {
+                                        case 'TRAMWAY':
                                             weight = 3;
-                                            dashArray = '5, 10';
+                                            dashArray = '5, 1, 5';
                                             break;
-                                        case 1:
+                                        case 'METRO':
                                             weight = 3;
                                             break;
-                                        case 2:
+                                        case 'TRAIN':
                                             weight = 5;
                                             break;
+                                        case 'RER':
+                                            weight = 5;
+                                            break;
+                                        case 'TER':
+                                            weight = 5;
+                                            dashArray = '5, 15';
+                                            color = '#AAAAAA';
+                                            break;
                                     }
 
-                                    L.polyline([
-                                        [fromStation.stop_lat, fromStation.stop_lon],
-                                        [toStation.stop_lat, toStation.stop_lon]
-                                    ], {
-                                        color: color,
-                                        weight: weight,
-                                        dashArray: dashArray,
-                                    }).addTo(map);
+                                    if (filterFn(fields.mode)) {
+                                        const latlngs = coordinates.map(coord => [coord[1], coord[0]]);
+                                        const polyline = L.polyline(latlngs, {
+                                            color: color,
+                                            weight: weight,
+                                            dashArray: dashArray,
+                                        }).bindPopup(`
+                                        <b>${fields.reseau}</b><br>
+                                        ID Ligne: ${fields.idrefligc}<br>
+                                        Mode: ${fields.mode === 'TRAIN' ? 'Transilien' : fields.mode}<br>
+                                        `).addTo(map);
 
-                                    // Update the mapping for stations connected by this edge
-                                    if (lineNames[edge.line]) {
-                                        stationLines[edge.from_stop_id].add(lineNames[edge.line]);
-                                        stationLines[edge.to_stop_id].add(lineNames[edge.line]);
+                                        layers.push({ layer: polyline, mode: fields.mode });
                                     }
+                                });
+
+                                // Apply hierarchy for superposition
+                                layers.forEach(item => {
+                                    if (item.mode === 'METRO' || item.mode === 'RER') {
+                                        item.layer.bringToFront();
+                                    } else if (item.mode === 'TRAMWAY' || item.mode === 'TER') {
+                                        item.layer.bringToBack();
+                                    }
+                                });
+                            };
+
+                            // Function to clear the map
+                            const clearMap = () => {
+                                map.eachLayer(layer => {
+                                    if (layer instanceof L.Polyline || layer instanceof L.CircleMarker) {
+                                        map.removeLayer(layer);
+                                    }
+                                });
+                            };
+
+                            // Add station circle markers
+                            const addStations = () => {
+                                const circleMarkers = [];
+                                Object.entries(vertices).forEach(([key, station]) => {
+                                    const marker = L.circleMarker([station.stop_lat, station.stop_lon], {
+                                        radius: getRadius(map.getZoom()),  // Dynamic radius based on zoom level
+                                        color: '#98aac3',
+                                        fillColor: '#ffffff',
+                                        opacity: 0.4,
+                                        fillOpacity: 1,
+                                    })
+                                    .bindPopup(`
+                                        <b>${station.stop_name}</b><br>
+                                        ID: ${key}<br>
+                                        Lignes: ${Array.from(stationLines[key]).join(', ')}
+                                    `)
+                                    .addTo(map);
+                                    circleMarkers.push(marker);
+                                });
+
+                                // Function to calculate radius based on zoom level
+                                function getRadius(zoom) {
+                                    return Math.max(3, zoom - (zoom / 4) - 5);
                                 }
-                            }
-                        });
-                    };
 
-                    // Function to clear the map
-                    const clearMap = () => {
-                        map.eachLayer(layer => {
-                            if (layer instanceof L.Polyline || layer instanceof L.CircleMarker) {
-                                map.removeLayer(layer);
-                            }
-                        });
-                    };
+                                // Function to update the radius of all circle markers
+                                function updateMarkerRadius() {
+                                    const zoom = map.getZoom();
+                                    circleMarkers.forEach(marker => {
+                                        marker.setRadius(getRadius(zoom));
+                                    });
+                                }
 
-                    // Add station circle markers
-                    const addStations = () => {
-                        const circleMarkers = [];
-                        Object.entries(vertices).forEach(([key, station]) => {
-                            const marker = L.circleMarker([station.stop_lat, station.stop_lon], {
-                                radius: getRadius(map.getZoom()),  // Dynamic radius based on zoom level
-                                color: '#98aac3',
-                                fillColor: '#ffffff',
-                                opacity: 0.4,
-                                fillOpacity: 1,
-                            })
-                            .bindPopup(`
-                                <b>${station.stop_name}</b><br>
-                                ID: ${key}<br>
-                                Lignes: ${Array.from(stationLines[key]).join(', ')}
-                            `)
-                            .addTo(map);
-                            circleMarkers.push(marker);
-                        });
+                                // Update radius when zoom level changes
+                                map.on('zoomend', updateMarkerRadius);
 
-                        // Function to calculate radius based on zoom level
-                        function getRadius(zoom) {
-                            return Math.max(3, zoom - 12);  // Example: Adjust radius calculation as needed
-                        }
+                                // Reorder markers to bring them to back
+                                circleMarkers.forEach(marker => {
+                                    marker.bringToBack();
+                                });
+                            };
 
-                        // Function to update the radius of all circle markers
-                        function updateMarkerRadius() {
-                            const zoom = map.getZoom();
-                            circleMarkers.forEach(marker => {
-                                marker.setRadius(getRadius(zoom));
+                            // Add all stations initially
+                            addStations();
+
+                            // Function to update connections based on filter states
+                            const updateConnections = () => {
+                                clearMap();
+                                addStations();
+                                if (filterActiveTrain) addConnections(mode => mode === 'TRAIN');
+                                if (filterActiveTramway) addConnections(mode => mode === 'TRAMWAY');
+                                if (filterActiveMetro) addConnections(mode => mode === 'METRO');
+                                if (filterActiveRER) addConnections(mode => mode === 'RER');
+                                if (filterActiveTER) addConnections(mode => mode === 'TER');
+                            };
+
+                            // Create boolean filter functions for each route type
+                            let filterActiveTrain = true;
+                            let filterActiveTramway = true;
+                            let filterActiveMetro = true;
+                            let filterActiveRER = true;
+                            let filterActiveTER = true;
+
+                            // Add event listeners to filter buttons
+                            document.getElementById('filter-train').addEventListener('click', () => {
+                                filterActiveTrain = !filterActiveTrain;
+                                updateConnections();
                             });
-                        }
 
-                        // Update radius when zoom level changes
-                        map.on('zoomend', updateMarkerRadius);
-                    };
+                            document.getElementById('filter-tramway').addEventListener('click', () => {
+                                filterActiveTramway = !filterActiveTramway;
+                                updateConnections();
+                            });
 
-                    // Add all stations initially
-                    addStations();
+                            document.getElementById('filter-metro').addEventListener('click', () => {
+                                filterActiveMetro = !filterActiveMetro;
+                                updateConnections();
+                            });
 
-                    // Filter functions
-                    const filterTrain = (routeType) => routeType === 2;
-                    const filterTramway = (routeType) => routeType === 0;
-                    const filterMetro = (routeType) => routeType === 1;
+                            document.getElementById('filter-rer').addEventListener('click', () => {
+                                filterActiveRER = !filterActiveRER;
+                                updateConnections();
+                            });
 
-                    // Create boolean filter functions for each route type
-                    let filterActiveTrain = true;
-                    let filterActiveTramway = true;
-                    let filterActiveMetro = true;
+                            document.getElementById('filter-ter').addEventListener('click', () => {
+                                filterActiveTER = !filterActiveTER;
+                                updateConnections();
+                            });
 
-                    // Add event listeners to filter buttons
-                    document.getElementById('filter-train').addEventListener('click', () => {
-                        filterActiveTrain = !filterActiveTrain;
-                        clearMap();
-                        addStations();
-                        filterActiveTrain ? addConnections(filterTrain) : addConnections(() => false);
-                        filterActiveTramway ? addConnections(filterTramway) : addConnections(() => false);
-                        filterActiveMetro ? addConnections(filterMetro) : addConnections(() => false);
-                    });
-
-                    document.getElementById('filter-tramway').addEventListener('click', () => {
-                        filterActiveTramway = !filterActiveTramway;
-                        clearMap();
-                        addStations();
-                        filterActiveTrain ? addConnections(filterTrain) : addConnections(() => false);
-                        filterActiveTramway ? addConnections(filterTramway) : addConnections(() => false);
-                        filterActiveMetro ? addConnections(filterMetro) : addConnections(() => false);
-                    });
-
-                    document.getElementById('filter-metro').addEventListener('click', () => {
-                        filterActiveMetro = !filterActiveMetro;
-                        clearMap();
-                        addStations();
-                        filterActiveTrain ? addConnections(filterTrain) : addConnections(() => false);
-                        filterActiveTramway ? addConnections(filterTramway) : addConnections(() => false);
-                        filterActiveMetro ? addConnections(filterMetro) : addConnections(() => false);
-                    });
-
-                    // Add all connections initially
-                    addConnections(() => true);
+                            // Add all connections initially
+                            updateConnections();
+                        })
+                        .catch(error => console.error('Error fetching traces data:', error));
                 })
                 .catch(error => console.error('Error fetching graph data:', error));
         })
