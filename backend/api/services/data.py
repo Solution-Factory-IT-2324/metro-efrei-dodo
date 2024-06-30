@@ -509,35 +509,6 @@ def get_line_data_by_name(line_short_name):
         raise Exception(f"Error getting metro lines at BDD request : {str(e)}")
 
 
-def get_neighbors(edges, current_stop_id, vertices):
-    neighbors = {}
-    # Track all stops at the same station
-    same_station_stops = {current_stop_id}
-
-    # Add direct connections and transfers
-    for edge in edges:
-        if edge["from_stop_id"] == current_stop_id:
-            neighbors[edge["to_stop_id"]] = (edge["travel_time"], vertices[edge["to_stop_id"]]['line'])
-        elif edge["to_stop_id"] == current_stop_id and edge["type"] == "transfer":
-            neighbors[edge["from_stop_id"]] = (edge["travel_time"], vertices[edge["from_stop_id"]]['line'])
-
-        if vertices[edge["from_stop_id"]]["stop_name"] == vertices[current_stop_id]["stop_name"]:
-            same_station_stops.add(edge["from_stop_id"])
-        if vertices[edge["to_stop_id"]]["stop_name"] == vertices[current_stop_id]["stop_name"]:
-            same_station_stops.add(edge["to_stop_id"])
-
-    for stop_id in same_station_stops:
-        if stop_id != current_stop_id:
-            for edge in edges:
-                if (edge["from_stop_id"] == current_stop_id and edge["to_stop_id"] == stop_id) or \
-                        (edge["from_stop_id"] == stop_id and edge["to_stop_id"] == current_stop_id):
-                    if edge["type"] == "transfer":
-                        neighbors[stop_id] = (edge["travel_time"], vertices[stop_id]['line'])
-                        break
-
-    return neighbors
-
-
 def emission_calculator(journey_path, emission_factors, graph):
     def haversine(coord1, coord2):
         import math
@@ -698,6 +669,35 @@ def preprocess_real_time_data(vertices):
                         real_time_lookup[stop_id].append(times['departure_time'])
             real_time_lookup[stop_id].sort()
     return real_time_lookup
+
+
+def get_neighbors(edges, current_stop_id, vertices):
+    neighbors = {}
+    # Track all stops at the same station
+    same_station_stops = {current_stop_id}
+
+    # Add direct connections and transfers
+    for edge in edges:
+        if edge["from_stop_id"] == current_stop_id:
+            neighbors[edge["to_stop_id"]] = (edge["travel_time"], vertices[edge["to_stop_id"]]['line'])
+        elif edge["to_stop_id"] == current_stop_id and edge["type"] == "transfer":
+            neighbors[edge["from_stop_id"]] = (edge["travel_time"], vertices[edge["from_stop_id"]]['line'])
+
+        if vertices[edge["from_stop_id"]]["stop_name"] == vertices[current_stop_id]["stop_name"]:
+            same_station_stops.add(edge["from_stop_id"])
+        if vertices[edge["to_stop_id"]]["stop_name"] == vertices[current_stop_id]["stop_name"]:
+            same_station_stops.add(edge["to_stop_id"])
+
+    for stop_id in same_station_stops:
+        if stop_id != current_stop_id:
+            for edge in edges:
+                if (edge["from_stop_id"] == current_stop_id and edge["to_stop_id"] == stop_id) or \
+                        (edge["from_stop_id"] == stop_id and edge["to_stop_id"] == current_stop_id):
+                    if edge["type"] == "transfer":
+                        neighbors[stop_id] = (edge["travel_time"], vertices[stop_id]['line'])
+                        break
+
+    return neighbors
 
 
 def dijkstra(graph_data, start_stop_id, end_stop_id, current_datetime=None):
