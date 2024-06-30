@@ -61,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 records.forEach(record => {
                                     const fields = record;
                                     const coordinates = fields.geo_shape.geometry.coordinates;
+                                    const picto = fields.picto_final ? fields.picto_final !== "picto_intermediaire/300" ? `<img src="${fields.picto_final}" alt="icon" style="width:16px; height:16px;">` : fields.mode === "TER" ? `<img src="/assets/TRAIN.png" alt="icon" style="width:16px; height:16px;">` : '' : '';
 
                                     let color = lineColors['IDFM:' + fields.idrefligc] || 'blue';
                                     if (color === 'blue') {
@@ -98,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                             weight: weight,
                                             dashArray: dashArray,
                                         }).bindPopup(`
-                                        <b>${fields.reseau}</b><br>
+                                        ${picto ? picto : ''}${picto ? ' ' : ''}<b>${fields.reseau}</b><br>
                                         ID Ligne: ${fields.idrefligc}<br>
                                         Mode: ${fields.mode === 'TRAIN' ? 'Transilien' : fields.mode}<br>
                                         `).addTo(map);
@@ -140,15 +141,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                     .bindPopup(`
                                         <b>${station.stop_name}</b><br>
                                         ID: ${key}<br>
-                                        Lignes: ${Array.from(stationLines[key]).join(', ')}
+                                        Lignes: ${Array.from(stationLines[key]).join(', ')}<br>
+                                        Accessible PMR : ${station.wheelchair === 1 ? 'Oui' : 'Non'}
                                     `)
                                     .addTo(map);
+                                    console.log(station.wheelchair, station.stop_name)
                                     circleMarkers.push(marker);
                                 });
 
                                 // Function to calculate radius based on zoom level
                                 function getRadius(zoom) {
-                                    return Math.max(3, zoom - (zoom / 4) - 5);
+                                    return Math.max(3, zoom - 12);  // Example: Adjust radius calculation as needed
                                 }
 
                                 // Function to update the radius of all circle markers
