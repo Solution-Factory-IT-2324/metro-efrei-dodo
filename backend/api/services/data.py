@@ -577,3 +577,89 @@ def get_neighbors(edges, current_stop_id, vertices):
                         break
 
     return neighbors
+
+
+def emission_calculator(journey_path, emission_factors, graph):
+    def haversine(coord1, coord2):
+        import math
+
+        # Radius of Earth (km)
+        R = 6371.0
+        lat1, lon1 = float(coord1[0]), float(coord1[1])
+        lat2, lon2 = float(coord2[0]), float(coord2[1])
+
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(
+            dlon / 2) ** 2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+        d = R * c
+        return d
+
+    cpt_CO2_journey = 0.0
+    cpt_distance = 0.0
+
+    for i in range(len(journey_path) - 1):
+        from_stop_id = journey_path[i]
+        to_stop_id = journey_path[i + 1]
+
+        from_vertex = graph['vertex'].get(from_stop_id)
+        to_vertex = graph['vertex'].get(to_stop_id)
+
+        if not from_vertex or not to_vertex:
+            continue
+
+        from_coord = (from_vertex['stop_lat'], from_vertex['stop_lon'])
+        to_coord = (to_vertex['stop_lat'], to_vertex['stop_lon'])
+
+        distance = haversine(from_coord, to_coord)
+        mode = from_vertex['line_type']
+        match mode:
+            case 0:
+                mode = 'tram'
+            case 1:
+                mode = 'metro'
+            case 2:
+                mode = 'train'
+            case 3:
+                mode = 'bus'
+            case 7:
+                mode = 'funiculaire'
+            case _:
+                continue
+
+        line = from_vertex.get('line', None)
+
+        if line and line.startswith('IDFM:'):
+            line = line[5:]
+        # If the mode is bus, we don't have line information
+        if mode == 'bus':
+            co2_line, co2_mode = emission_factors.get(mode, {}).get('null', (0, 0))
+        else:
+            co2_line, co2_mode = emission_factors.get(mode, {}).get(line, (0, 0))
+        emission_factor = co2_line if co2_line else co2_mode
+
+        cpt_CO2_journey += distance * float(emission_factor)
+        cpt_distance += distance
+
+    CO2_journey_car = 99.0
+    return cpt_CO2_journey, cpt_distance * CO2_journey_car, cpt_distance
+
+
+def get_emission_factors():
+    db_connection = connection()
+    cursor = db_connection.cursor(dictionary=True)
+    cursor.execute("SELECT transport_mode, id_line, co2e_voy_km_line, co2e_voy_km_mode FROM emissions")
+    emission_factors = {}
+    for row in cursor.fetchall():
+        mode = row['transport_mode']
+        line = row['id_line']
+        co2_line = row['co2e_voy_km_line']
+        co2_mode = row['co2e_voy_km_mode']
+        if mode not in emission_factors:
+            emission_factors[mode] = {}
+        emission_factors[mode][line] = (co2_line, co2_mode)
+    cursor.close()
+    db_connection.close()
+    return emission_factors
