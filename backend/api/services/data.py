@@ -700,6 +700,14 @@ def get_neighbors(edges, current_stop_id, vertices):
     return neighbors
 
 
+def get_next_departure(real_time_lookup, stop_id, current_time_seconds):
+    if stop_id in real_time_lookup:
+        for departure_time in real_time_lookup[stop_id]:
+            if current_time_seconds <= departure_time:
+                return departure_time
+    return None
+
+
 def dijkstra(graph_data, start_stop_id, end_stop_id, current_datetime=None):
     vertices = graph_data["vertex"]
     edges = graph_data["edge"]
@@ -717,6 +725,12 @@ def dijkstra(graph_data, start_stop_id, end_stop_id, current_datetime=None):
     arrival_times = {stop_id: float('inf') for stop_id in vertices}
     arrival_times[start_stop_id] = current_time_seconds
     current_lines = {stop_id: None for stop_id in vertices}
+
+    next_departure_time = get_next_departure(real_time_lookup, start_stop_id, current_time_seconds)
+    if next_departure_time is not None:
+        current_time_seconds = next_departure_time
+
+    arrival_times[start_stop_id] = current_time_seconds
 
     # Priority queue
     priority_queue = [(0, start_stop_id, current_time_seconds, None)]
@@ -736,7 +750,7 @@ def dijkstra(graph_data, start_stop_id, end_stop_id, current_datetime=None):
             for i, stop_id in enumerate(path):
                 vertices[stop_id]['line'] = vertices[stop_id].get('line', 'N/A')
                 print(
-                    f"{i + 1}. {vertices[stop_id]['stop_name']} ({stop_id}) - Line {vertices[stop_id]['line']} - Time: {distances[stop_id]}s at Hour: {arrival_times[stop_id] // 3600}h{arrival_times[stop_id] % 3600 // 60}m{arrival_times[stop_id] % 60}s ({arrival_times[stop_id]})")
+                    f"{i + 1}. {vertices[stop_id]['stop_name']} ({stop_id}) - Line {vertices[stop_id]['line']} - Time: {distances[stop_id]}s at Hour: {arrival_times[stop_id] // 3600}h{arrival_times[stop_id] % 3600 // 60}m{arrival_times[stop_id] % 60}s ({arrival_times[stop_id]}s)")
             return path, distances[end_stop_id]
 
         if current_distance > distances[current_stop_id]:
@@ -749,13 +763,8 @@ def dijkstra(graph_data, start_stop_id, end_stop_id, current_datetime=None):
 
             # Check for line change
             if neighbor_line != current_line and current_stop_id in real_time_lookup:
-                next_departure_time = float('inf')
-                for departure_time in real_time_lookup[current_stop_id]:
-                    if current_arrival_time <= departure_time < next_departure_time:
-                        next_departure_time = departure_time
-                        break
-
-                if next_departure_time < float('inf'):
+                next_departure_time = get_next_departure(real_time_lookup, current_stop_id, current_arrival_time)
+                if next_departure_time is not None:
                     wait_time = next_departure_time - current_arrival_time
                 else:
                     continue  # No valid departure time found
