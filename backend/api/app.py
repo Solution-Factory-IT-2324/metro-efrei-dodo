@@ -25,6 +25,22 @@ def run(port=8080, debug=True):
     def itineraire():
         return send_from_directory(app.static_folder, 'itineraire.html')
 
+    @app.route('/reseau', methods=['GET'])
+    def reseau():
+        return send_from_directory(app.static_folder, 'reseau.html')
+
+    @app.route('/PMR', methods=['GET'])
+    def PMR():
+        return send_from_directory(app.static_folder, 'PMR.html')
+
+    @app.route('/connexite', methods=['GET'])
+    def connexite():
+        return send_from_directory(app.static_folder, 'connexite.html')
+
+    @app.route('/ACPM', methods=['GET'])
+    def ACPM():
+        return send_from_directory(app.static_folder, 'ACPM.html')
+
     # Print all routes
     output = []
     for rule in app.url_map.iter_rules():

@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
                     // Fetch traces data from the Ile-de-France Mobilités dataset
-                    fetch('http://127.0.0.1:8080/traces-du-reseau-ferre-idf.json')
+                    fetch('http://127.0.0.1:8080/assets/json/traces-du-reseau-ferre-idf.json')
                         .then(response => response.json())
                         .then(tracesData => {
                             const records = tracesData;
