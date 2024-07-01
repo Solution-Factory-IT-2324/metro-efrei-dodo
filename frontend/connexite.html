@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Connexité | TheGreenWay</title>
     <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/connexite.css">
     <link rel="icon" href="assets/img/favicon.ico">
 </head>
 <body>
@@ -25,17 +26,20 @@
         </div>
     </header>
     <main>
-        <input type="text" id="depart" placeholder="Départ">
-        <input type="text" id="destination" placeholder="Arrivé">
-        <button class="button" onclick="callPythonFunction()">C'est parti !</button>
-
-        <button class="button" onclick="generateAndShowImage()">Générer l'image</button>
-        <img id="generatedImage" src="" alt="Image générée" style="display: none;"/>
+        <h1>Vérifiez la Connexité du Réseau</h1>
+        <form id="connexite-form">
+            <label for="method">Choisissez une méthode :</label>
+            <select id="method" name="method">
+                <option value="dfs">DFS</option>
+                <option value="bfs">BFS</option>
+            </select>
+            <button type="submit">Vérifier Connexité</button>
+        </form>
+        <div id="result-container"></div>
     </main>
     <footer>
-        <p>&copy; 2024 Mon Nom</p>
+        <p>&copy; 2024 The Green Way | Mastercamp IT (Groupe n°13)</p>
     </footer>
-    <script src="assets/js/script.js"></script>
+    <script src="assets/js/connexite.js"></script>
 </body>
 </html>
-api/line/metro/1

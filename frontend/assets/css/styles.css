@@ -11,6 +11,12 @@ body, html {
     background-color: #eeeeee;
 }
 
+@media (prefers-color-scheme: dark) {
+    body, html {
+        background-color: #666666;
+    }
+}
+
 header {
     background-color: #ffa43a;
     color: white;
@@ -18,6 +24,14 @@ header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+}
+
+@media (prefers-color-scheme: dark) {
+    header {
+        background-color: #020202;
+        color: white;
+        border-bottom: #dddddd solid 0.5px;
+    }
 }
 
 .nav-container {
@@ -134,4 +148,11 @@ footer {
     position: absolute;
     bottom: 0;
     width: 100%;
+}
+
+@media (prefers-color-scheme: dark) {
+    footer {
+        background-color: #020202;
+        color: white;
+    }
 }

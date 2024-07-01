@@ -1,0 +1,93 @@
+main {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#connexite-form {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+}
+
+#connexite-form label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 10px;
+}
+
+#connexite-form select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+#connexite-form button {
+    background-color: #4CAF50;
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#connexite-form button:hover {
+    background-color: #3e8e41;
+}
+
+#result-container {
+    margin-top: 20px;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+}
+
+#result-container p {
+    margin: 0;
+    font-size: 16px;
+}
+
+
+@media (prefers-color-scheme: dark) {
+    h1 {
+        color: white;
+    }
+
+    #connexite-form {
+        background: #333;
+    }
+
+    #connexite-form label {
+        color: white;
+    }
+
+    #connexite-form select {
+        background: #444;
+        color: white;
+    }
+
+    #connexite-form button {
+        background-color: #4CAF50;
+        color: #ffffff;
+    }
+
+    #result-container {
+        background: #333;
+    }
+
+    #result-container p {
+        color: white;
+    }
+}
