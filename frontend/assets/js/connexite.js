@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
                 if (data.status === 200) {
                     const result = data.data.result ? 'Le réseau est connecté.' : 'Le réseau n\'est pas connecté.';
-                    resultContainer.innerHTML = `<p>Méthode: ${data.data.method.toUpperCase()}</p><p>${result}</p>`;
+                    resultContainer.innerHTML = `<p>Méthode : ${data.data.method.toUpperCase()}</p><p>${result}</p>`;
                 } else {
                     resultContainer.innerHTML = '<p>Erreur lors de la vérification de la connexité.</p>';
                 }
