@@ -47,6 +47,25 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
 
+                    // Draw only transfer
+                    const drawTransfers = () => {
+                        edges.forEach(edge => {
+                            if (edge.type !== 'transfer') {
+                                return;
+                            }
+                            const from = vertices[edge.from];
+                            const to = vertices[edge.to];
+                            const fromCoords = [vertices[edge.from_stop_id].stop_lat, vertices[edge.from_stop_id].stop_lon];
+                            const toCoords = [vertices[edge.to_stop_id].stop_lat, vertices[edge.to_stop_id].stop_lon];
+                            const polyline = L.polyline([fromCoords, toCoords], {
+                                color: '#000000',
+                                weight: 3,
+                            }).addTo(map);
+                        });
+                    };
+
+
+
                     // Fetch traces data from the Ile-de-France Mobilités dataset
                     fetch('http://127.0.0.1:8080/traces-du-reseau-ferre-idf.json')
                         .then(response => response.json())
@@ -231,6 +250,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             // Add all connections initially
                             updateConnections();
+
+                            // drawTransfers();
+
                         })
                         .catch(error => console.error('Error fetching traces data:', error));
                 })
