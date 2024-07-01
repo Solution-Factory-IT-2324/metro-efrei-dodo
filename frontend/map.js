@@ -11,9 +11,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }),
     };
 
-    // Add the default tile layer to the map
-    baseLayers['CartoDB Positron'].addTo(map);
-    L.control.layers(baseLayers).addTo(map);
+    let currentBaseLayer;
+    const setBaseLayer = () => {
+        const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (isDarkMode) {
+            if (currentBaseLayer !== baseLayers['CartoDB Dark Matter']) {
+                if (currentBaseLayer) {
+                    map.removeLayer(currentBaseLayer);
+                }
+                baseLayers['CartoDB Dark Matter'].addTo(map);
+                currentBaseLayer = baseLayers['CartoDB Dark Matter'];
+            }
+        } else {
+            if (currentBaseLayer !== baseLayers['CartoDB Positron']) {
+                if (currentBaseLayer) {
+                    map.removeLayer(currentBaseLayer);
+                }
+                baseLayers['CartoDB Positron'].addTo(map);
+                currentBaseLayer = baseLayers['CartoDB Positron'];
+            }
+        }
+    };
+
+    // Add the initial tile layer to the map
+    setBaseLayer();
+
+    // Add layer control to the map
+    const layersControl = L.control.layers(baseLayers).addTo(map);
 
     // Fetch line data to get colors, names, and route types
     fetch('http://127.0.0.1:8080/api/line/')
@@ -53,12 +77,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (edge.type !== 'transfer') {
                                 return;
                             }
-                            const from = vertices[edge.from];
-                            const to = vertices[edge.to];
                             const fromCoords = [vertices[edge.from_stop_id].stop_lat, vertices[edge.from_stop_id].stop_lon];
                             const toCoords = [vertices[edge.to_stop_id].stop_lat, vertices[edge.to_stop_id].stop_lon];
                             const polyline = L.polyline([fromCoords, toCoords], {
-                                color: '#000000',
+                                color: currentBaseLayer === baseLayers['CartoDB Dark Matter'] ? '#ffffff' : '#000000',
+                                opacity: 0.1,
                                 weight: 3,
                             }).addTo(map);
                         });
@@ -261,6 +284,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             // Draw transfers
                             drawTransfers();
+
+                            // Add listener when dark/light mode changes
+                            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+                                setBaseLayer();
+                                console.log(currentBaseLayer === baseLayers['CartoDB Dark Matter'])
+                                updateConnections();
+                            });
+
+                            // Event listener for base layer change
+                            map.on('baselayerchange', (event) => {
+                                currentBaseLayer = event.layer;
+                                console.log(`Base layer changed to: ${event.name}`);
+                                updateConnections();
+                            });
 
                         })
                         .catch(error => console.error('Error fetching traces data:', error));
