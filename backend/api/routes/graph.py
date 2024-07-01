@@ -78,7 +78,7 @@ def get_tree_structure(option):
             case _:
                 raise ValueError(f"Invalid option: {option}")
         print(f"Time taken: {time() - start}s")
-        # set_cache(f"tree_structure_{option}.json", tree_structure)
+        set_cache(f"tree_structure_{option}.json", tree_structure)
         return json_response(data=tree_structure, message='Success')
     except Exception as e:
         return json_response(message=f"Error getting tree structure: {str(e)}", status=500)

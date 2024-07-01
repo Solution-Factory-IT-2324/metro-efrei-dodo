@@ -37,9 +37,9 @@ def run(port=8080, debug=True):
     def connexite():
         return send_from_directory(app.static_folder, 'connexite.html')
 
-    @app.route('/ACPM', methods=['GET'])
+    @app.route('/APCM', methods=['GET'])
     def ACPM():
-        return send_from_directory(app.static_folder, 'ACPM.html')
+        return send_from_directory(app.static_folder, 'APCM.html')
 
     # Print all routes
     output = []
