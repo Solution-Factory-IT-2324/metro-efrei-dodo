@@ -124,7 +124,7 @@ def is_station_accessible(station_id):
         if result is not None:
             return {
                 'station_id': station_id,
-                'wheelchair_accessible': result['wheelchair_boarding'] == 1 # Case == 0 treated as False
+                'wheelchair_accessible': result['wheelchair_boarding'] == 1  # Case == 0 treated as False
             }
         return None
     except Exception as e:
@@ -213,31 +213,31 @@ def get_graph_data():
             'wheelchair': stop.get('wheelchair_boarding')
         } for stop in stops},
         'edge': [
-            {
-                'from_stop_id': conn['from_stop_id'],
-                'to_stop_id': conn['to_stop_id'],
-                'travel_time': conn['travel_time'],
-                'line': conn['route_id'],
-                'type': 'connection'
-            } for conn in connections
-        ] + [
-            {
-                'from_stop_id': transfer['from_stop_id'],
-                'to_stop_id': transfer['to_stop_id'],
-                'travel_time': transfer['min_transfer_time'],
-                'transfer_type': transfer['transfer_type'],
-                'type': 'transfer'
-            } for transfer in transfers
-        ]
+                    {
+                        'from_stop_id': conn['from_stop_id'],
+                        'to_stop_id': conn['to_stop_id'],
+                        'travel_time': conn['travel_time'],
+                        'line': conn['route_id'],
+                        'type': 'connection'
+                    } for conn in connections
+                ] + [
+                    {
+                        'from_stop_id': transfer['from_stop_id'],
+                        'to_stop_id': transfer['to_stop_id'],
+                        'travel_time': transfer['min_transfer_time'],
+                        'transfer_type': transfer['transfer_type'],
+                        'type': 'transfer'
+                    } for transfer in transfers
+                ]
     }
 
     return graph
 
 
-
 def get_is_graph_connected(graph, option="dfs"):
     from time import time
     start = time()
+
     def get_neighbors(graph, vertex):
         neighbors = set()
         for edge in graph['edge']:
@@ -246,6 +246,7 @@ def get_is_graph_connected(graph, option="dfs"):
             elif edge['to_stop_id'] == vertex:
                 neighbors.add(edge['from_stop_id'])
         return neighbors
+
     vertices = list(graph['vertex'].keys())
     if not vertices:
         return False
@@ -352,6 +353,7 @@ def prim_algorithm(graph):
     # print("Tree is connected" if get_is_graph_connected(tree) else "Tree is not connected")
     # print("Tree is a minimum spanning tree" if len(tree['vertex']) - 1 == len(tree['edge']) else "Tree is not a minimum spanning tree")
     return tree
+
 
 def kruskal_algorithm(graph):
     # Initialize the tree and the list of edges to process
@@ -528,12 +530,32 @@ def dijkstra(graph_data, start_stop_id, end_stop_id):
                 current_stop_id = previous_nodes[current_stop_id]
             path.insert(0, start_stop_id)
 
-            # Print path and distance, with station name and line
+            path_details = []
+            previous_stop_name, change_detected, collected_time = None, False, 0
             for i, stop_id in enumerate(path):
-                vertices[stop_id]['line'] = vertices[stop_id].get('line', 'N/A')
+                stop_name = vertices[stop_id]['stop_name']
+                if i == 0 or stop_name != previous_stop_name or change_detected:
+                    stop_info = {
+                        "step": len(path_details) + 1,
+                        "stop_name": stop_name,
+                        "stop_id": stop_id,
+                        "line": vertices[stop_id].get('line', 'N/A'),
+                        "time": distances[stop_id]
+                    }
+                    path_details.append(stop_info)
+                    previous_stop_name = stop_name
+                    change_detected = True if len(path_details) > 1 else False
+                elif not change_detected:
+                    print(f"Skipping {stop_name} ({stop_id}), Time: {distances[stop_id]}s")
+                    collected_time = distances[stop_id]
+
+            print(collected_time, "\n", path_details)
+            for stop_info in path_details:
+                stop_info['time'] = stop_info['time'] - collected_time if stop_info['time'] != 0 else stop_info['time']
                 print(
-                    f"{i + 1}. {vertices[stop_id]['stop_name']} ({stop_id}) - Line {vertices[stop_id]['line']} - Time: {distances[stop_id]}s")
-            return path, distances[end_stop_id]
+                    f"{stop_info['step']}. {stop_info['stop_name']} ({stop_info['stop_id']}) - Line {stop_info['line']} - Time: {stop_info['time']}s")
+
+            return path_details, path_details[-1]['time']
 
         if current_distance > distances[current_stop_id]:
             continue

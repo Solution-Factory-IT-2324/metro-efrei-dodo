@@ -24,17 +24,27 @@ def get_journey_from_to():
 
         from time import time
         start_time = time()
-        path, distance = dijkstra(graph_data, start, end)
+        path, time_travel = dijkstra(graph_data, start, end)
         print(f"Time taken to calculate path: {time() - start_time}")
-        if distance == float('infinity'):
-            return json_response(data={'path': path, 'distance': distance}, message='No path found', status=404)
+        if time_travel == float('infinity'):
+            return json_response(data={'path': path, 'distance': time_travel}, message='No path found', status=404)
 
         # Generate ID for journey calculated
-        journey_id = f"journey-{uuid4()}.json"
-        set_cache(journey_id, {'path': path, 'distance': distance, 'journey_id': journey_id})
-        return json_response(data={'path': path, 'distance': distance, 'journey_id': journey_id}, message='Success')
+        generated_uuid = uuid4()
+        journey_id = f"journey-{generated_uuid}.json"
+        set_cache(journey_id, {'path': path, 'time_travel': time_travel, 'journey_id': journey_id})
+        return json_response(data={'journey_id': f"journey-{generated_uuid}"}, message='Success')
     except Exception as e:
         return json_response(message=f"Error calculating journey: {str(e)}", status=500)
+
+
+@bp.route('/get-journey/<journey_id>', methods=['GET'])
+def get_journey(journey_id):
+    journey_data = get_cache(f'{journey_id}.json', max_age_seconds=25660)
+    if journey_data is None:
+        return json_response(message=f'Journey data with ID {journey_id} not available', status=500)
+
+    return json_response(data=journey_data, message='Success')
 
 
 @bp.route('/emission/<journey_id>', methods=['GET'])
@@ -56,7 +66,9 @@ def get_journey_emission(journey_id):
         return json_response(message='Graph data not available', status=500)
 
     try:
-        emission_journey_public_transport, emission_journey_car, distance = emission_calculator(journey_data['path'], emission_data, graph_data)
+        emission_journey_public_transport, emission_journey_car, distance = emission_calculator(journey_data['path'],
+                                                                                                emission_data,
+                                                                                                graph_data)
         return json_response(data={'emission_journey_public_transport': emission_journey_public_transport,
                                    'emission_journey_car': emission_journey_car,
                                    'journey_id': journey_id,
