@@ -32,7 +32,7 @@ def get_journey_from_to():
         # Generate ID for journey calculated
         generated_uuid = uuid4()
         journey_id = f"journey-{generated_uuid}.json"
-        set_cache(journey_id, {'path': path, 'time_travel': time_travel, 'journey_id': journey_id})
+        set_cache(journey_id, {'path': path, 'time_travel': time_travel, 'journey_id': journey_id, 'datetime-generation': time()})
         return json_response(data={'journey_id': f"journey-{generated_uuid}"}, message='Success')
     except Exception as e:
         return json_response(message=f"Error calculating journey: {str(e)}", status=500)
