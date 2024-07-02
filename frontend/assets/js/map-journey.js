@@ -203,10 +203,23 @@ document.addEventListener('DOMContentLoaded', () => {
                                     });
                                 };
 
+                                const urlParams = new URLSearchParams(window.location.search);
+                                const journeyId = urlParams.get('journey');
+
                                 // Function to update connections based on filter states
                                 const updateConnections = () => {
                                     clearMap();
                                     addStations();
+
+                                    fetch(`http://127.0.0.1:8080/api/journey/get-journey/${journeyId}`)
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            if (data.status === 200) {
+                                                displayJourney(data.data);
+                                            }
+                                        })
+                                        .catch(error => console.error('Error fetching journey data:', error));
+
                                     if (filterActiveTrain) addConnections(mode => mode === 'TRAIN');
                                     if (filterActiveTramway) addConnections(mode => mode === 'TRAMWAY');
                                     if (filterActiveMetro) addConnections(mode => mode === 'METRO');
@@ -232,8 +245,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 // Draw transfers
                                 drawTransfers();
 
-                                const urlParams = new URLSearchParams(window.location.search);
-                                const journeyId = urlParams.get('journey');
 
                                 if (journeyId) {
                                     fetch(`http://127.0.0.1:8080/api/journey/get-journey/${journeyId}`)
