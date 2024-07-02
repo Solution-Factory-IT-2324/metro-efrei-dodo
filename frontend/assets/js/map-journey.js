@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     records.forEach(record => {
                                         const fields = record;
                                         const coordinates = fields.geo_shape.geometry.coordinates;
-                                        const picto = fields.picto_final ? fields.picto_final !== "picto_intermediaire/300" ? `<img src="${fields.picto_final}" alt="icon" style="width:16px; height:16px;">` : fields.mode === "TER" ? `<img src="/assets/TRAIN.png" alt="icon" style="width:16px; height:16px;">` : '' : '';
+                                        const picto = fields.picto_final ? fields.picto_final !== "picto_intermediaire/300" ? `<img src="${fields.picto_final}" alt="icon" style="width:16px; height:16px;">` : fields.mode === "TER" ? `<img src="/assets/img/TRAIN.svg" alt="icon" style="width:16px; height:16px;">` : '' : '';
 
                                         let color = lineColors['IDFM:' + fields.idrefligc] || 'blue';
                                         if (color === 'blue') {
@@ -286,6 +286,76 @@ document.addEventListener('DOMContentLoaded', () => {
                                     // Clear previous journey info
                                     journeyInfo.innerHTML = '';
 
+                                    // Calculate journey time in minutes
+                                    const journeyStartTime = new Date(journeyData["datetime-generation"] * 1000);
+                                    const journeyEndTime = new Date(journeyStartTime.getTime() + (journeyData.path[journeyData.path.length - 1].time * 1000));
+                                    const journeyDuration = Math.round((journeyEndTime - journeyStartTime) / 60000); // Duration in minutes
+
+                                    // Format time for display
+                                    const formatTime = date => date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+                                    // Collect unique lines used in the journey
+                                    const linesUsed = [];
+                                    journeyData.path.forEach(step => {
+                                        if (!linesUsed.includes(step.line)) {
+                                            linesUsed.push(step.line);
+                                        }
+                                    });
+
+                                    // Generate HTML for lines with pictograms
+                                    const lineIconsHtml = linesUsed.map(line => {
+                                        let iconSrc;
+                                        switch (lineTypes[line]) {
+                                            case 0:
+                                                iconSrc = 'assets/img/TRAM.svg';
+                                                break;
+                                            case 1:
+                                                iconSrc = 'assets/img/METRO.svg';
+                                                break;
+                                            case 2:
+                                                iconSrc = 'assets/img/TRAIN.svg';
+                                                break;
+                                            case 3:
+                                                iconSrc = 'assets/img/RER.svg';
+                                                break;
+                                            default:
+                                                iconSrc = 'assets/img/default-icon.png';
+                                        }
+                                        return `<span class="metro-icon"><img src="${iconSrc}" alt="icon" class="line-icon" style="width: 16px; height: 16px" "> <span class="line-number" style="color: ${lineColors[line]}">${lineNames[line] || 'N/A'}</span></span>`;
+                                    }).join('<span class="metro-icon"> > </span>');
+
+                                    // Add summary information
+                                    const journeySummary = document.createElement('div');
+                                    journeySummary.id = 'journey-summary';
+                                    journeySummary.innerHTML = `
+                                        <div class="journey-header">
+                                            <div class="journey-info">
+                                                <div class="journey-title">
+                                                    <p>${journeyData.path[0].stop_name}</p>
+                                                    <p>${journeyData.path[journeyData.path.length - 1].stop_name}</p>
+                                                </div>
+                                                <div class="journey-icons">
+                                                    ${lineIconsHtml}
+                                                </div>
+                                                <div class="journey-time">
+                                                    <p>${journeyStartTime.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} | ${formatTime(journeyStartTime)} → ${formatTime(journeyEndTime)}</p>
+                                                    <p>${journeyDuration} min</p>
+                                                </div>
+                                            </div>
+                                            <div class="journey-actions">
+                                                <div class="action-button">
+                                                    <img src="assets/img/PRINT.svg" alt="Imprimer en PDF" style="width: 24px; height: 24px">
+                                                    <p>Imprimer</p>
+                                                </div>
+                                                <div class="action-button">
+                                                    <img src="assets/img/SHARE.svg" alt="Partager le lien" style="width: 24px; height: 24px">
+                                                    <p>Partager</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                                    journeyInfo.appendChild(journeySummary);
+
                                     // Draw a line from coordinate A to coordinate B
                                     const drawLine = (fromStopId, toStopId, color, weight, dashArray, opacity) => {
                                         const fromStopLat = roundCoordinate(vertices[fromStopId].stop_lat);
@@ -317,7 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 dashArray = '5, 5';
                                                 color = currentBaseLayer === baseLayers['CartoDB Dark Matter'] ? 'rgba(255,255,255,0.25)' : '#000000';
                                                 opacity = 0.75;
-                                                weight= 3;
+                                                weight = 3;
                                             } else {
                                                 opacity = 1;
                                                 switch (lineTypes[step.line]) {
@@ -376,6 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                                     openJourneyPanel();
                                 };
+
 
                                 // Add listener when dark/light mode changes
                                 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {

@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 records.forEach(record => {
                                     const fields = record;
                                     const coordinates = fields.geo_shape.geometry.coordinates;
-                                    const picto = fields.picto_final ? fields.picto_final !== "picto_intermediaire/300" ? `<img src="${fields.picto_final}" alt="icon" style="width:16px; height:16px;">` : fields.mode === "TER" ? `<img src="/assets/TRAIN.png" alt="icon" style="width:16px; height:16px;">` : '' : '';
+                                    const picto = fields.picto_final ? fields.picto_final !== "picto_intermediaire/300" ? `<img src="${fields.picto_final}" alt="icon" style="width:16px; height:16px;">` : fields.mode === "TER" ? `<img src="/assets/img/TRAIN.svg" alt="icon" style="width:16px; height:16px;">` : '' : '';
 
                                     let color = lineColors['IDFM:' + fields.idrefligc] || 'blue';
                                     if (color === 'blue') {
