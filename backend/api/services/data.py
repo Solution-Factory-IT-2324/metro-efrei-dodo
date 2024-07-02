@@ -555,6 +555,15 @@ def dijkstra(graph_data, start_stop_id, end_stop_id):
                 print(
                     f"{stop_info['step']}. {stop_info['stop_name']} ({stop_info['stop_id']}) - Line {stop_info['line']} - Time: {stop_info['time']}s")
 
+            # End of path doublon detection
+            if len(path_details) > 1:
+                last_stop_name = path_details[-1]['stop_name']
+                for i in range(len(path_details) - 2, -1, -1):
+                    if path_details[i]['stop_name'] == last_stop_name:
+                        path_details.pop(i + 1)
+                    else:
+                        break
+
             return path_details, path_details[-1]['time']
 
         if current_distance > distances[current_stop_id]:
