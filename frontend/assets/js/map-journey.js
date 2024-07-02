@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const fetchGraph = async () => {
+    const fetchGraph = () => {
         fetch('http://127.0.0.1:8080/api/line/')
             .then(response => response.json())
             .then(lineData => {
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 color: color,
                                                 weight: weight,
                                                 dashArray: dashArray,
-                                                opacity: 0.3,
+                                                opacity: 0.15,
                                             }).bindPopup(`
                                             ${picto ? picto : ''}${picto ? ' ' : ''}<b>${fields.reseau}</b><br>
                                             ID Ligne: ${fields.idrefligc}<br>
@@ -168,8 +168,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                             radius: getRadius(map.getZoom()),  // Dynamic radius based on zoom level
                                             color: '#98aac3',
                                             fillColor: '#ffffff',
-                                            opacity: 0.2,
-                                            fillOpacity: 0.5,
+                                            opacity: 0.05,
+                                            fillOpacity: 0.25,
                                         })
                                             .bindPopup(`
                                             <b>${station.stop_name}</b><br>
@@ -231,6 +231,101 @@ document.addEventListener('DOMContentLoaded', () => {
 
                                 // Draw transfers
                                 drawTransfers();
+
+                                const urlParams = new URLSearchParams(window.location.search);
+                                const journeyId = urlParams.get('journey');
+
+                                if (journeyId) {
+                                    fetch(`http://127.0.0.1:8080/api/journey/get-journey/${journeyId}`)
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            if (data.status === 200) {
+                                                displayJourney(data.data);
+                                            } else {
+                                                console.error('Error fetching journey data:', data.message);
+                                            }
+                                        })
+                                        .catch(error => console.error('Error fetching journey data:', error));
+                                } else {
+                                    console.error('No journey ID provided in the URL');
+                                }
+
+                                const displayJourney = (journeyData) => {
+                                    const pathCoordinates = journeyData.path.map(step => [vertices[step.stop_id].stop_lat, vertices[step.stop_id].stop_lon]);
+
+                                    // Helper function to round coordinates
+                                    const roundCoordinate = (coord, decimals = 8) => {
+                                        return parseFloat(parseFloat(coord).toFixed(decimals));
+                                    };
+
+                                    // Draw a line from coordinate A to coordinate B
+                                    const drawLine = (fromStopId, toStopId) => {
+                                        const fromStopLat = roundCoordinate(vertices[fromStopId].stop_lat);
+                                        const fromStopLon = roundCoordinate(vertices[fromStopId].stop_lon);
+                                        const toStopLat = roundCoordinate(vertices[toStopId].stop_lat);
+                                        const toStopLon = roundCoordinate(vertices[toStopId].stop_lon);
+
+                                        const coords = [
+                                            [fromStopLat, fromStopLon],
+                                            [toStopLat, toStopLon]
+                                        ];
+
+                                        let color = vertices[fromStopId].line ? lineColors[vertices[fromStopId].line] : 'blue';
+
+                                        let weight = 5;
+                                        let dashArray = '';
+
+                                        switch (lineTypes[vertices[fromStopId].line]) {
+                                            case 0:
+                                                weight = 3;
+                                                dashArray = '5, 1, 5';
+                                                break;
+                                            case 1:
+                                                weight = 3;
+                                                break;
+                                            case 2:
+                                                weight = 5;
+                                                break;
+                                        }
+
+                                        const polyline = L.polyline(coords, {
+                                            color: color,
+                                            weight: weight,
+                                            dashArray: dashArray,
+                                            opacity: 1,
+                                        }).addTo(map);
+                                    };
+
+                                    journeyData.path.forEach((step, index) => {
+                                        if (index < journeyData.path.length - 1) {
+                                            const nextStep = journeyData.path[index + 1];
+                                            drawLine(step.stop_id, nextStep.stop_id);
+                                        }
+                                    });
+
+                                    // Adjust the map to fit the bounds with some padding
+                                    const paddedBounds = L.latLngBounds(pathCoordinates).pad(0.1);
+                                    map.fitBounds(paddedBounds);
+
+                                    // Add circle markers for each stop in the journey
+                                    journeyData.path.forEach(step => {
+                                        L.circleMarker([vertices[step.stop_id].stop_lat, vertices[step.stop_id].stop_lon], {
+                                            radius: 5,
+                                            color: 'blue',
+                                            fillColor: '#ffffff',
+                                            opacity: 0.9,
+                                            fillOpacity: 1,
+                                        })
+                                        .bindPopup(`
+                                            <b>${step.stop_name}</b><br>
+                                            ID: ${step.stop_id}<br>
+                                            Line: ${step.line}<br>
+                                            Time: ${step.time}s
+                                        `)
+                                        .addTo(map);
+                                    });
+                                };
+
                             })
                             .catch(error => console.error('Error fetching traces data:', error));
                     })
@@ -246,163 +341,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add layer control to the map
     const layersControl = L.control.layers(baseLayers).addTo(map);
-
-    // Fetch and merge station data
-    fetch('http://127.0.0.1:8080/api/stations/')
-        .then(response => response.json())
-        .then(data => {
-            const stations = {};
-            data.data.forEach(station => {
-                if (!stations[station.stop_name]) {
-                    stations[station.stop_name] = {
-                        stop_name: station.stop_name,
-                        stop_lat: station.stop_lat,
-                        stop_lon: station.stop_lon,
-                        stop_id: new Set(),
-                        lines: new Set(),
-                    };
-                }
-                stations[station.stop_name].lines.add(station.route_long_name);
-                stations[station.stop_name].stop_id.add(station.stop_id);
-            });
-            const mergedStations = Object.values(stations).map(station => ({
-                stop_name: station.stop_name,
-                stop_lat: station.stop_lat,
-                stop_lon: station.stop_lon,
-                stop_id: Array.from(station.stop_id),
-                lines: Array.from(station.lines),
-            }));
-
-            // Implement autocomplete for input fields
-            const startInput = document.getElementById('departure');
-            const endInput = document.getElementById('arrival');
-            const startSuggestionsContainer = document.getElementById('departure-suggestions');
-            const endSuggestionsContainer = document.getElementById('arrival-suggestions');
-
-            const createSuggestions = (input) => {
-                const value = input.value.toLowerCase();
-                const suggestions = mergedStations.filter(station =>
-                    station.stop_name.toLowerCase().includes(value)
-                );
-                return suggestions;
-            };
-
-            const displaySuggestions = (input, suggestions, suggestionsContainer) => {
-                suggestionsContainer.innerHTML = '';
-                // Limit to 5 suggestions
-                suggestions = suggestions.slice(0, 5);
-                suggestions.forEach(suggestion => {
-                    const div = document.createElement('div');
-                    div.classList.add('suggestion');
-                    div.innerHTML = `<strong>${suggestion.stop_name}</strong><br>
-                                    ${suggestion.lines.join(', ')}`;
-                    div.addEventListener('click', () => {
-                        input.value = suggestion.stop_name;
-                        suggestionsContainer.innerHTML = '';
-                    });
-                    suggestionsContainer.appendChild(div);
-                });
-
-                if (suggestions.length === 0) {
-                    const div = document.createElement('div');
-                    div.classList.add('suggestion');
-                    div.innerHTML = 'Aucun résultat trouvé.';
-                    div.style.pointerEvents = 'none';
-                    suggestionsContainer.appendChild(div);
-                }
-            };
-
-            startInput.addEventListener('input', () => {
-                const suggestions = createSuggestions(startInput);
-                displaySuggestions(startInput, suggestions, startSuggestionsContainer);
-                startSuggestionsContainer.style.display = 'block';
-            });
-
-            endInput.addEventListener('input', () => {
-                const suggestions = createSuggestions(endInput);
-                displaySuggestions(endInput, suggestions, endSuggestionsContainer);
-                endSuggestionsContainer.style.display = 'block';
-            });
-
-            const hideSuggestions = (suggestionsContainer) => {
-                suggestionsContainer.style.display = 'none';
-            };
-
-            startInput.addEventListener('blur', () => {
-                setTimeout(() => hideSuggestions(startSuggestionsContainer), 100);
-            });
-
-            endInput.addEventListener('blur', () => {
-                setTimeout(() => hideSuggestions(endSuggestionsContainer), 100);
-            });
-
-            startInput.addEventListener('focus', () => {
-                if (startInput.value !== '') {
-                    const suggestions = createSuggestions(startInput);
-                    displaySuggestions(startInput, suggestions, startSuggestionsContainer);
-                    startSuggestionsContainer.style.display = 'block';
-                }
-            });
-
-            endInput.addEventListener('focus', () => {
-                if (endInput.value !== '') {
-                    const suggestions = createSuggestions(endInput);
-                    displaySuggestions(endInput, suggestions, endSuggestionsContainer);
-                    endSuggestionsContainer.style.display = 'block';
-                }
-            });
-
-            hideSuggestions(startSuggestionsContainer);
-            hideSuggestions(endSuggestionsContainer);
-
-            const whenInput = document.getElementById('when');
-            const now = new Date();
-            whenInput.value = now.toISOString().slice(0, 16);
-            whenInput.readOnly = true;
-
-            const searchButton = document.getElementById('search-button');
-            searchButton.addEventListener('click', () => {
-            const departure = document.getElementById('departure').value;
-            const arrival = document.getElementById('arrival').value;
-
-            if (departure && arrival) {
-                // Match the stop_id of the selected stations
-                const departureStation = mergedStations.find(station => station.stop_name === departure);
-                const arrivalStation = mergedStations.find(station => station.stop_name === arrival);
-                console.log(departureStation.stop_id[0], arrivalStation.stop_id[0]);
-
-                fetch('http://127.0.0.1:8080/api/journey', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        start_vertex: departureStation.stop_id[0],
-                        end_vertex: arrivalStation.stop_id[0]
-                    })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    const journeyId = data.data.journey_id;
-                    console.log('Journey ID:', journeyId)
-                    if (journeyId) {
-                        window.location.href = `journey-map.html?journey=${journeyId}`;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error calculating journey:', error);
-                });
-            } else {
-                alert('Veuillez entrer une gare de départ et une gare d\'arrivée.');
-            }
-        });
-
-
-        })
-        .catch(error => console.error('Error fetching stations data:', error));
 });
