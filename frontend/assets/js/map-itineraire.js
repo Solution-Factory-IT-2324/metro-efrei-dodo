@@ -258,15 +258,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         stop_name: station.stop_name,
                         stop_lat: station.stop_lat,
                         stop_lon: station.stop_lon,
+                        stop_id: new Set(),
                         lines: new Set(),
                     };
                 }
                 stations[station.stop_name].lines.add(station.route_long_name);
+                stations[station.stop_name].stop_id.add(station.stop_id);
             });
             const mergedStations = Object.values(stations).map(station => ({
                 stop_name: station.stop_name,
                 stop_lat: station.stop_lat,
                 stop_lon: station.stop_lon,
+                stop_id: Array.from(station.stop_id),
                 lines: Array.from(station.lines),
             }));
 
@@ -356,6 +359,49 @@ document.addEventListener('DOMContentLoaded', () => {
             const now = new Date();
             whenInput.value = now.toISOString().slice(0, 16);
             whenInput.readOnly = true;
+
+            const searchButton = document.getElementById('search-button');
+            searchButton.addEventListener('click', () => {
+            const departure = document.getElementById('departure').value;
+            const arrival = document.getElementById('arrival').value;
+
+            if (departure && arrival) {
+                // Match the stop_id of the selected stations
+                const departureStation = mergedStations.find(station => station.stop_name === departure);
+                const arrivalStation = mergedStations.find(station => station.stop_name === arrival);
+                console.log(departureStation.stop_id[0], arrivalStation.stop_id[0]);
+
+                fetch('http://127.0.0.1:8080/api/journey', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        start_vertex: departureStation.stop_id[0],
+                        end_vertex: arrivalStation.stop_id[0]
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const journeyId = data.data.journey_id;
+                    console.log('Journey ID:', journeyId)
+                    if (journeyId) {
+                        window.location.href = `journey.html?id=${journeyId}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error calculating journey:', error);
+                });
+            } else {
+                alert('Veuillez entrer une gare de départ et une gare d\'arrivée.');
+            }
+        });
+
 
         })
         .catch(error => console.error('Error fetching stations data:', error));
