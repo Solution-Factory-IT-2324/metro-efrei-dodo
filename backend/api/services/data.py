@@ -515,6 +515,8 @@ def dijkstra(graph_data, start_stop_id, end_stop_id):
     distances = {stop_id: float('inf') for stop_id in vertices}
     distances[start_stop_id] = 0
     previous_nodes = {stop_id: None for stop_id in vertices}
+    connection_types = {}
+    previous_lines = []
 
     # Priority queue
     priority_queue = [(0, start_stop_id)]
@@ -526,21 +528,24 @@ def dijkstra(graph_data, start_stop_id, end_stop_id):
         if current_stop_id == end_stop_id:
             path = []
             while previous_nodes[current_stop_id]:
-                path.insert(0, current_stop_id)
+                path.insert(0, (current_stop_id, connection_types.get(current_stop_id, 'connection')))
                 current_stop_id = previous_nodes[current_stop_id]
-            path.insert(0, start_stop_id)
+            path.insert(0, (start_stop_id, 'start'))
 
             path_details = []
             previous_stop_name, change_detected, collected_time = None, False, 0
-            for i, stop_id in enumerate(path):
+            for i, (stop_id, connection_type) in enumerate(path):
                 stop_name = vertices[stop_id]['stop_name']
+                current_line = vertices[stop_id].get('line', 'N/A')
+
                 if i == 0 or stop_name != previous_stop_name or change_detected:
                     stop_info = {
                         "step": len(path_details) + 1,
                         "stop_name": stop_name,
                         "stop_id": stop_id,
-                        "line": vertices[stop_id].get('line', 'N/A'),
-                        "time": distances[stop_id]
+                        "line": current_line,
+                        "time": distances[stop_id],
+                        "connection_type": connection_type
                     }
                     path_details.append(stop_info)
                     previous_stop_name = stop_name
@@ -549,11 +554,26 @@ def dijkstra(graph_data, start_stop_id, end_stop_id):
                     print(f"Skipping {stop_name} ({stop_id}), Time: {distances[stop_id]}s")
                     collected_time = distances[stop_id]
 
-            print(collected_time, "\n", path_details)
+                # Insert transfer step if there's a line change at the same station
+                print(previous_lines)
+                print(f"Checking line change at {stop_name} ({stop_id})", current_line in previous_lines, current_line != previous_lines[-1] if previous_lines else True, previous_lines[-1] if previous_lines else None, current_line, previous_lines[-1] != current_line if previous_lines else False)
+                if i > 0 and connection_type == 'connection' and previous_lines[-1] != current_line:
+                    transfer_info = {
+                        "step": len(path_details) + 1,
+                        "stop_name": stop_name,
+                        "stop_id": stop_id,
+                        "line": current_line,
+                        "time": distances[stop_id] + 120,
+                        "connection_type": 'transfer'
+                    }
+                    path_details[-1]['line'] = previous_lines[-1]
+                    path_details.append(transfer_info)
+
+                previous_lines.append(current_line)
+
             for stop_info in path_details:
                 stop_info['time'] = stop_info['time'] - collected_time if stop_info['time'] != 0 else stop_info['time']
-                print(
-                    f"{stop_info['step']}. {stop_info['stop_name']} ({stop_info['stop_id']}) - Line {stop_info['line']} - Time: {stop_info['time']}s")
+                print(f"{stop_info['step']}. {stop_info['stop_name']} ({stop_info['stop_id']}) - Line {stop_info['line']} - Time: {stop_info['time']}s - Connection: {stop_info['connection_type']}")
 
             # End of path doublon detection
             if len(path_details) > 1:
@@ -576,6 +596,9 @@ def dijkstra(graph_data, start_stop_id, end_stop_id):
             if distance < distances[neighbor]:
                 distances[neighbor] = distance
                 previous_nodes[neighbor] = current_stop_id
+                # Determine if this connection is a transfer
+                connection_type = 'transfer' if vertices[current_stop_id]['stop_name'] == vertices[neighbor]['stop_name'] else 'connection'
+                connection_types[neighbor] = connection_type
                 heapq.heappush(priority_queue, (distance, neighbor))
 
     return None  # No path found
