@@ -15,12 +15,12 @@ def get_all_metro_stations():
         cursor = db_connection.cursor(dictionary=True)
 
         query = """
-            SELECT DISTINCT s.stop_id, s.stop_name, s.stop_lat, s.stop_lon, s.zone_id, s.wheelchair_boarding
+            SELECT DISTINCT s.stop_id, s.stop_name, s.stop_lat, s.stop_lon, s.zone_id, s.wheelchair_boarding, r.route_id, r.route_long_name, r.route_type
             FROM stops s
             JOIN stop_times st ON s.stop_id = st.stop_id
             JOIN trips t ON st.trip_id = t.trip_id
             JOIN routes r ON t.route_id = r.route_id
-            WHERE r.route_type in (0,1,2)
+            WHERE r.route_type in (0, 1, 2)
         """
 
         cursor.execute(query)
