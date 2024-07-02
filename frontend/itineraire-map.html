@@ -20,18 +20,18 @@
             <div class="modal-container-row">
                 <label for="departure">DÉPART (obligatoire)</label>
                 <input type="text" id="departure" placeholder="Gare/station/arrêt">
-                <div id="departure-suggestions" class="suggestions-container"></div>
+                <div id="departure-suggestions" class="suggestions-container" style="display: none"></div>
             </div>
 
             <div class="modal-container-row">
                 <label for="arrival">ARRIVÉE (obligatoire)</label>
                 <input type="text" id="arrival" placeholder="Gare/station/arrêt">
-                <div id="arrival-suggestions" class="suggestions-container"></div>
+                <div id="arrival-suggestions" class="suggestions-container" style="display: none"></div>
             </div>
 
             <div class="modal-container-row">
                 <label for="when">QUAND</label>
-                <input type="datetime-local" id="when">
+                <input type="datetime-local" id="when" readonly disabled>
             </div>
 
             <button id="search-button">Lancer la recherche</button>

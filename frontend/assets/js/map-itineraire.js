@@ -352,6 +352,11 @@ document.addEventListener('DOMContentLoaded', () => {
             hideSuggestions(startSuggestionsContainer);
             hideSuggestions(endSuggestionsContainer);
 
+            const whenInput = document.getElementById('when');
+            const now = new Date();
+            whenInput.value = now.toISOString().slice(0, 16);
+            whenInput.readOnly = true;
+
         })
         .catch(error => console.error('Error fetching stations data:', error));
 });
