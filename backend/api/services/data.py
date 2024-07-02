@@ -517,6 +517,7 @@ def dijkstra(graph_data, start_stop_id, end_stop_id):
     previous_nodes = {stop_id: None for stop_id in vertices}
     connection_types = {}
     previous_lines = []
+    previous_stop = []
 
     # Priority queue
     priority_queue = [(0, start_stop_id)]
@@ -555,9 +556,7 @@ def dijkstra(graph_data, start_stop_id, end_stop_id):
                     collected_time = distances[stop_id]
 
                 # Insert transfer step if there's a line change at the same station
-                print(previous_lines)
-                print(f"Checking line change at {stop_name} ({stop_id})", current_line in previous_lines, current_line != previous_lines[-1] if previous_lines else True, previous_lines[-1] if previous_lines else None, current_line, previous_lines[-1] != current_line if previous_lines else False)
-                if i > 0 and connection_type == 'connection' and previous_lines[-1] != current_line:
+                if i > 0 and connection_type == 'connection' and previous_lines[-1] != current_line and previous_stop[-1] == stop_id:
                     transfer_info = {
                         "step": len(path_details) + 1,
                         "stop_name": stop_name,
@@ -570,6 +569,7 @@ def dijkstra(graph_data, start_stop_id, end_stop_id):
                     path_details.append(transfer_info)
 
                 previous_lines.append(current_line)
+                previous_stop.append(stop_id)
 
             for stop_info in path_details:
                 stop_info['time'] = stop_info['time'] - collected_time if stop_info['time'] != 0 else stop_info['time']
