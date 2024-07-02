@@ -286,6 +286,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const displaySuggestions = (input, suggestions, suggestionsContainer) => {
                 suggestionsContainer.innerHTML = '';
+                // Limit to 5 suggestions
+                suggestions = suggestions.slice(0, 5);
                 suggestions.forEach(suggestion => {
                     const div = document.createElement('div');
                     div.classList.add('suggestion');
@@ -297,17 +299,59 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     suggestionsContainer.appendChild(div);
                 });
+
+                if (suggestions.length === 0) {
+                    const div = document.createElement('div');
+                    div.classList.add('suggestion');
+                    div.innerHTML = 'Aucun résultat trouvé.';
+                    div.style.pointerEvents = 'none';
+                    suggestionsContainer.appendChild(div);
+                }
             };
 
             startInput.addEventListener('input', () => {
                 const suggestions = createSuggestions(startInput);
                 displaySuggestions(startInput, suggestions, startSuggestionsContainer);
+                startSuggestionsContainer.style.display = 'block';
             });
 
             endInput.addEventListener('input', () => {
                 const suggestions = createSuggestions(endInput);
                 displaySuggestions(endInput, suggestions, endSuggestionsContainer);
+                endSuggestionsContainer.style.display = 'block';
             });
+
+            const hideSuggestions = (suggestionsContainer) => {
+                suggestionsContainer.style.display = 'none';
+            };
+
+            startInput.addEventListener('blur', () => {
+                setTimeout(() => hideSuggestions(startSuggestionsContainer), 100);
+            });
+
+            endInput.addEventListener('blur', () => {
+                setTimeout(() => hideSuggestions(endSuggestionsContainer), 100);
+            });
+
+            startInput.addEventListener('focus', () => {
+                if (startInput.value !== '') {
+                    const suggestions = createSuggestions(startInput);
+                    displaySuggestions(startInput, suggestions, startSuggestionsContainer);
+                    startSuggestionsContainer.style.display = 'block';
+                }
+            });
+
+            endInput.addEventListener('focus', () => {
+                if (endInput.value !== '') {
+                    const suggestions = createSuggestions(endInput);
+                    displaySuggestions(endInput, suggestions, endSuggestionsContainer);
+                    endSuggestionsContainer.style.display = 'block';
+                }
+            });
+
+            hideSuggestions(startSuggestionsContainer);
+            hideSuggestions(endSuggestionsContainer);
+
         })
         .catch(error => console.error('Error fetching stations data:', error));
 });
