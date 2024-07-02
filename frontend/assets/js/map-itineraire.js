@@ -357,6 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const whenInput = document.getElementById('when');
             const now = new Date();
+            now.setHours(now.getHours() + 2);
             whenInput.value = now.toISOString().slice(0, 16);
             whenInput.readOnly = true;
 

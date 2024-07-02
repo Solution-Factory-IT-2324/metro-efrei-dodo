@@ -460,6 +460,45 @@ document.addEventListener('DOMContentLoaded', () => {
                                         .addTo(map);
                                     });
 
+                                    const carbonDiv = document.createElement('div');
+                                    carbonDiv.id = 'carbon-emission';
+                                    journeyInfo.appendChild(carbonDiv);
+                                    const fetchCarbonEmission = (journeyId) => {
+                                        fetch(`http://127.0.0.1:8080/api/journey/emission/${journeyId}`)
+                                            .then(response => response.json())
+                                            .then(data => {
+                                                if (data.status === 200) {
+                                                    let emissionData = data.data;
+                                                    const carbonEmission = document.getElementById('carbon-emission');
+                                                    carbonEmission.classList.add('carbon-emission');
+                                                    carbonEmission.innerHTML = `
+                                                    <div class="emission-summary">
+                                                        <h3>CO<sub>2</sub> émis</h3>
+                                                        <img src="assets/img/LEAF.SVG" alt="Leaf Icon" style="margin-left: 8px; margin-right: 2px; width: 14px; height: 14px; filter: invert(48%) sepia(8%) saturate(3456%) hue-rotate(72deg) brightness(93%) contrast(79%);">
+                                                        <span class="emission-value">${Math.round(emissionData.emission_journey_public_transport)} g</span>
+                                                    </div>
+                                                    <div class="emission-values">
+                                                        <p><strong>Calcul de l'émission de CO<sub>2</sub> du trajet</strong></p>
+                                                        <p>Émission de CO<sub>2</sub> calculée pour ce trajet : <span class="emission-value">${Math.round(emissionData.emission_journey_public_transport)} g</span></p>
+                                                        <p>Émission de CO<sub>2</sub> calculée pour le même trajet en voiture : <span class="emission-value">${Math.round(emissionData.emission_journey_car)} g</span></p>
+                                                    </div>
+                                                    <br>
+                                                    <div class="responsible-message">
+                                                        <span class="emission-value">Soyez responsables !</span>
+                                                        <p>Pour un trajet domicile – travail, à l'année, utiliser la voiture et les transports en commun sur ce trajet, fait économiser <span class="emission-value">${Math.round((emissionData.emission_journey_car - emissionData.emission_journey_public_transport) * (365-52*2-31))/100} kg de CO<sub>2</sub></span></p>
+                                                    </div>
+                                                    `;
+                                                } else {
+                                                    console.error('Error fetching carbon emission data:', data.message);
+                                                }
+                                            })
+                                            .catch(error => console.error('Error fetching carbon emission data:', error));
+                                    };
+
+                                    if (journeyId) {
+                                        fetchCarbonEmission(journeyId);
+                                    }
+
                                     openJourneyPanel();
                                 };
 

@@ -102,11 +102,30 @@ body, html {
     margin-right: 4px;
 }
 
-.journey-step {
+.journey-step, .carbon-emission {
     padding: 16px;
     border-bottom: 1px solid #E0E0E0;
 }
 
-.journey-step:last-child {
+.journey-step:last-child, .carbon-emission:last-child {
     border-bottom: none;
+}
+
+.emission-summary {
+    display: inline-flex;
+    align-items: center;
+}
+
+.emission-value {
+    font-weight: bold;
+    color: #3e8e41;
+}
+
+.carbon-emission p {
+    margin: 0;
+    font-size: 1em;
+}
+
+#carbon-emission {
+    margin-bottom: 10vh;
 }
