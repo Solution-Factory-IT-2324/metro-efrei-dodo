@@ -19,7 +19,7 @@ def run(port=8080, debug=True):
 
     @app.route('/', methods=['GET'])
     def index():
-        return send_from_directory(app.static_folder, 'index.html')
+        return send_from_directory(app.static_folder, 'itineraire.html')
 
     @app.route('/itineraire', methods=['GET'])
     def itineraire():
