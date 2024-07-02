@@ -40,13 +40,19 @@ body {
     margin-bottom: 5px;
 }
 
+.modal-container-row {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
 .modal-body input[type="text"],
 .modal-body input[type="datetime-local"] {
     font-size: 14px;
     padding: 10px;
     border: 1px solid #cccccc;
     border-radius: 5px;
-    margin-bottom: 15px;
+    position: relative;
 }
 
 .accessible-options {
@@ -98,20 +104,20 @@ body {
 }
 
 .suggestions-container {
-    position: absolute;
-    background: white;
-    border: 1px solid #ddd;
-    z-index: 1000;
-    max-height: 200px;
+    background-color: white;
+    border-top: none;
+    z-index: 1001;
+    max-height: 100px;
     overflow-y: auto;
-    width: calc(100% - 20px);
-    margin-top: 5px;
-    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
 }
+
 .suggestion {
     padding: 10px;
     cursor: pointer;
 }
+
 .suggestion:hover {
     background-color: #f0f0f0;
 }
