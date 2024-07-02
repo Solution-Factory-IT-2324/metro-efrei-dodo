@@ -407,15 +407,31 @@ document.addEventListener('DOMContentLoaded', () => {
                                             drawLine(step.stop_id, nextStep.stop_id, color, weight, dashArray, opacity);
                                         }
 
+                                        let iconSrc;
+                                        switch (lineTypes[step.line]) {
+                                            case 0:
+                                                iconSrc = 'assets/img/TRAM.svg';
+                                                break;
+                                            case 1:
+                                                iconSrc = 'assets/img/METRO.svg';
+                                                break;
+                                            case 2:
+                                                iconSrc = 'assets/img/TRAIN.svg';
+                                                break;
+                                            case 3:
+                                                iconSrc = 'assets/img/RER.svg';
+                                                break;
+                                            default:
+                                                iconSrc = 'assets/img/default-icon.png';
+                                        }
                                         const stepDiv = document.createElement('div');
                                         stepDiv.classList.add('journey-step');
                                         stepDiv.innerHTML = `
                                             <div>
-                                            <b>${step.stop_name}</b><br>
-                                            ID Station : ${step.stop_id}<br>
-                                            Ligne : ${lineNames[step.line] || 'N/A'}<br>
+                                            <b>${step.stop_name}</b>${vertices[step.stop_id].wheelchair === 1 ? '<span style="margin-left: 4px"><img src="assets/img/PMR.svg" alt="Accessible PMR" style="width: 16px; height: 16px; filter: invert(51%) sepia(70%) saturate(3301%) hue-rotate(161deg) brightness(95%) contrast(101%);"></span>' : ''}<br>
+                                            <span class="metro-icon"><img src="${iconSrc}" alt="icon" class="line-icon" style="width: 16px; height: 16px" "><span style="padding-left: 4px; color: ${lineColors[step.line]}">${lineNames[step.line] || 'N/A'}</span></span><br>
                                             ${parseFloat(step.time) !== 0.0 ? 'Temps : ' : ''}${parseInt(step.time / 60) ? parseInt(step.time % 60) ? parseInt(step.time / 60) + 'min ' : parseInt(step.time / 60) + 'min<br>' : ''}${parseInt(step.time % 60) ? parseInt(step.time % 60) + 's<br>' : ''}
-                                            ${step.connection_type ? 'Connection : ' : ''}${step.connection_type === 'transfer' ? 'Transfert' : step.connection_type === 'start' ? 'Départ' : journeyData.path[journeyData.path.length - 1].stop_id === step.stop_id ? 'Destination' : step.connection_type === 'connection' ? 'Voyage' : step.connection_type}
+                                            ${step.connection_type ? step.connection_type === 'start' ? '' : journeyData.path[journeyData.path.length - 1].stop_id === step.stop_id ? '' : 'Connection : ' : ''}${step.connection_type === 'transfer' ? 'Transfert' : step.connection_type === 'start' ? 'Station de départ' : journeyData.path[journeyData.path.length - 1].stop_id === step.stop_id ? 'Station de destination' : step.connection_type === 'connection' ? 'Voyage' : step.connection_type}
                                             </div>
                                         `;
                                         journeyInfo.appendChild(stepDiv);

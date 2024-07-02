@@ -21,6 +21,7 @@ body, html {
     top: 0;
     left: 0;
     width: 350px;
+    height: 100vh;
     background: #fff;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -31,6 +32,11 @@ body, html {
 
 #journey-panel.open {
     display: block;
+}
+
+#journey-info {
+    height: calc(100vh - 60px);
+    overflow-y: auto;
 }
 
 .journey-header {
