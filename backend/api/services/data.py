@@ -632,8 +632,11 @@ def emission_calculator(journey_path, emission_factors, graph):
     cpt_distance = 0.0
 
     for i in range(len(journey_path) - 1):
-        from_stop_id = journey_path[i]
-        to_stop_id = journey_path[i + 1]
+        from_stop = journey_path[i]
+        to_stop = journey_path[i + 1]
+
+        from_stop_id = from_stop['stop_id']
+        to_stop_id = to_stop['stop_id']
 
         from_vertex = graph['vertex'].get(from_stop_id)
         to_vertex = graph['vertex'].get(to_stop_id)
