@@ -75,8 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const toCoords = [vertices[edge.to_stop_id].stop_lat, vertices[edge.to_stop_id].stop_lon];
                                 const polyline = L.polyline([fromCoords, toCoords], {
                                     color: currentBaseLayer === baseLayers['CartoDB Dark Matter'] ? 'rgba(255,255,255,0.25)' : '#000000',
-                                    opacity: 0.05,
-                                    weight: 3,
+                                    opacity: currentBaseLayer === baseLayers['CartoDB Dark Matter'] ? 0.1 : 0.01,
+                                    weight: 2,
                                 }).addTo(map);
                             });
                         };
@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     };
 
                                     // Draw a line from coordinate A to coordinate B
-                                    const drawLine = (fromStopId, toStopId) => {
+                                    const drawLine = (fromStopId, toStopId, color, weight, dashArray, opacity) => {
                                         const fromStopLat = roundCoordinate(vertices[fromStopId].stop_lat);
                                         const fromStopLon = roundCoordinate(vertices[fromStopId].stop_lon);
                                         const toStopLat = roundCoordinate(vertices[toStopId].stop_lat);
@@ -270,36 +270,43 @@ document.addEventListener('DOMContentLoaded', () => {
                                             [toStopLat, toStopLon]
                                         ];
 
-                                        let color = vertices[fromStopId].line ? lineColors[vertices[fromStopId].line] : 'blue';
-
-                                        let weight = 5;
-                                        let dashArray = '';
-
-                                        switch (lineTypes[vertices[fromStopId].line]) {
-                                            case 0:
-                                                weight = 3;
-                                                dashArray = '5, 1, 5';
-                                                break;
-                                            case 1:
-                                                weight = 3;
-                                                break;
-                                            case 2:
-                                                weight = 5;
-                                                break;
-                                        }
-
                                         const polyline = L.polyline(coords, {
                                             color: color,
                                             weight: weight,
                                             dashArray: dashArray,
-                                            opacity: 1,
+                                            opacity: opacity,
                                         }).addTo(map);
                                     };
 
                                     journeyData.path.forEach((step, index) => {
                                         if (index < journeyData.path.length - 1) {
                                             const nextStep = journeyData.path[index + 1];
-                                            drawLine(step.stop_id, nextStep.stop_id);
+                                            let color = step.line ? lineColors[step.line] : 'blue';
+                                            let weight = 5;
+                                            let dashArray = '';
+
+                                            if (nextStep.connection_type === 'transfer') {
+                                                dashArray = '5, 5';
+                                                color = currentBaseLayer === baseLayers['CartoDB Dark Matter'] ? 'rgba(255,255,255,0.25)' : '#000000';
+                                                opacity = 0.75;
+                                                weight= 3;
+                                            } else {
+                                                opacity = 1;
+                                                switch (lineTypes[step.line]) {
+                                                    case 0:
+                                                        weight = 2;
+                                                        dashArray = '5, 1, 5';
+                                                        break;
+                                                    case 1:
+                                                        weight = 3;
+                                                        break;
+                                                    case 2:
+                                                        weight = 5;
+                                                        break;
+                                                }
+                                            }
+
+                                            drawLine(step.stop_id, nextStep.stop_id, color, weight, dashArray, opacity);
                                         }
                                     });
 
@@ -311,20 +318,35 @@ document.addEventListener('DOMContentLoaded', () => {
                                     journeyData.path.forEach(step => {
                                         L.circleMarker([vertices[step.stop_id].stop_lat, vertices[step.stop_id].stop_lon], {
                                             radius: 5,
-                                            color: 'blue',
+                                            color: journeyData.path[0].stop_id === step.stop_id ? 'green' : journeyData.path[journeyData.path.length - 1].stop_id === step.stop_id ? 'red' : 'blue',
                                             fillColor: '#ffffff',
                                             opacity: 0.9,
                                             fillOpacity: 1,
                                         })
                                         .bindPopup(`
                                             <b>${step.stop_name}</b><br>
-                                            ID: ${step.stop_id}<br>
-                                            Line: ${step.line}<br>
-                                            Time: ${step.time}s
+                                            ID Station : ${step.stop_id}<br>
+                                            Ligne : ${lineNames[step.line] || 'N/A'}<br>
+                                            Temps : ${parseInt(step.time / 60)} min ${step.time % 60} s<br>
+                                            Connection : ${step.connection_type === 'transfer' ? 'Transfer' : step.connection_type === 'start' ? 'Départ' : journeyData.path[journeyData.path.length - 1].stop_id === step.stop_id ? 'Destination' : 'None'}
                                         `)
                                         .addTo(map);
                                     });
                                 };
+
+                                // Add listener when dark/light mode changes
+                                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+                                    setBaseLayer();
+                                    console.log(currentBaseLayer === baseLayers['CartoDB Dark Matter'])
+                                    updateConnections();
+                                });
+
+                                // Event listener for base layer change
+                                map.on('baselayerchange', (event) => {
+                                    currentBaseLayer = event.layer;
+                                    console.log(`Base layer changed to: ${event.name}`);
+                                    updateConnections();
+                                });
 
                             })
                             .catch(error => console.error('Error fetching traces data:', error));
