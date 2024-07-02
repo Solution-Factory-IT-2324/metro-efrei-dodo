@@ -33,6 +33,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const journeyPanel = document.getElementById('journey-panel');
+    const journeyInfo = document.getElementById('journey-info');
+    // const closePanel = document.getElementById('close-panel');
+
+    const openJourneyPanel = () => {
+    journeyPanel.classList.add('open');
+    };
+
+    const closeJourneyPanel = () => {
+        journeyPanel.classList.remove('open');
+    };
+
+    // closePanel.addEventListener('click', closeJourneyPanel);
+
     const fetchGraph = () => {
         fetch('http://127.0.0.1:8080/api/line/')
             .then(response => response.json())
@@ -269,6 +283,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                         return parseFloat(parseFloat(coord).toFixed(decimals));
                                     };
 
+                                    // Clear previous journey info
+                                    journeyInfo.innerHTML = '';
+
                                     // Draw a line from coordinate A to coordinate B
                                     const drawLine = (fromStopId, toStopId, color, weight, dashArray, opacity) => {
                                         const fromStopLat = roundCoordinate(vertices[fromStopId].stop_lat);
@@ -319,6 +336,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                                             drawLine(step.stop_id, nextStep.stop_id, color, weight, dashArray, opacity);
                                         }
+
+                                        const stepDiv = document.createElement('div');
+                                        stepDiv.classList.add('journey-step');
+                                        stepDiv.innerHTML = `
+                                            <div>
+                                            <b>${step.stop_name}</b><br>
+                                            ID Station : ${step.stop_id}<br>
+                                            Ligne : ${lineNames[step.line] || 'N/A'}<br>
+                                            ${parseFloat(step.time) !== 0.0 ? 'Temps : ' : ''}${parseInt(step.time / 60) ? parseInt(step.time % 60) ? parseInt(step.time / 60) + 'min ' : parseInt(step.time / 60) + 'min<br>' : ''}${parseInt(step.time % 60) ? parseInt(step.time % 60) + 's<br>' : ''}
+                                            ${step.connection_type ? 'Connection : ' : ''}${step.connection_type === 'transfer' ? 'Transfert' : step.connection_type === 'start' ? 'Départ' : journeyData.path[journeyData.path.length - 1].stop_id === step.stop_id ? 'Destination' : step.connection_type === 'connection' ? 'Voyage' : step.connection_type}
+                                            </div>
+                                        `;
+                                        journeyInfo.appendChild(stepDiv);
                                     });
 
                                     // Adjust the map to fit the bounds with some padding
@@ -339,10 +369,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                             ID Station : ${step.stop_id}<br>
                                             Ligne : ${lineNames[step.line] || 'N/A'}<br>
                                             Temps : ${parseInt(step.time / 60)} min ${step.time % 60} s<br>
-                                            Connection : ${step.connection_type === 'transfer' ? 'Transfer' : step.connection_type === 'start' ? 'Départ' : journeyData.path[journeyData.path.length - 1].stop_id === step.stop_id ? 'Destination' : 'None'}
+                                            Connection : ${step.connection_type === 'transfer' ? 'Transfert' : step.connection_type === 'start' ? 'Départ' : journeyData.path[journeyData.path.length - 1].stop_id === step.stop_id ? 'Destination' : step.connection_type === 'connection' ? 'Voyage' : step.connection_type}
                                         `)
                                         .addTo(map);
                                     });
+
+                                    openJourneyPanel();
                                 };
 
                                 // Add listener when dark/light mode changes
