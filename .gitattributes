@@ -1,1 +1,2 @@
 backend/V2/*.txt filter=lfs diff=lfs merge=lfs -text
+backend/api/services/cache/*.json filter=lfs diff=lfs merge=lfs -text

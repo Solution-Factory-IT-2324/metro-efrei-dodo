@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Itineraire | TheGreenWay</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="assets/css/map-itineraire.css">
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="icon" href="assets/img/favicon.ico">
+</head>
+<body>
+    <div id="map" style="width: 100%; height: 100vh;"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2>Itinéraire</h2>
+        </div>
+        <div class="modal-body">
+            <div class="modal-container-row">
+                <label for="departure">DÉPART (obligatoire)</label>
+                <input type="text" id="departure" placeholder="Gare/station/arrêt">
+                <div id="departure-suggestions" class="suggestions-container" style="display: none"></div>
+            </div>
+
+            <div class="modal-container-row">
+                <label for="arrival">ARRIVÉE (obligatoire)</label>
+                <input type="text" id="arrival" placeholder="Gare/station/arrêt">
+                <div id="arrival-suggestions" class="suggestions-container" style="display: none"></div>
+            </div>
+
+            <div class="modal-container-row">
+                <label for="when">QUAND</label>
+                <input type="datetime-local" id="when" readonly disabled>
+            </div>
+
+            <button id="search-button">Lancer la recherche</button>
+        </div>
+    </div>
+    <script src="assets/js/map-itineraire.js"></script>
+</body>
+</html>
