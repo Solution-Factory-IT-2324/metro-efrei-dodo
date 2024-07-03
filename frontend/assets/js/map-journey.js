@@ -343,11 +343,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 </div>
                                             </div>
                                             <div class="journey-actions">
-                                                <div class="action-button">
+                                                <div class="action-button" id="print-button">
                                                     <img src="assets/img/PRINT.svg" alt="Imprimer en PDF" style="width: 24px; height: 24px">
                                                     <p>Imprimer</p>
                                                 </div>
-                                                <div class="action-button">
+                                                <div class="action-button" id="share-button">
                                                     <img src="assets/img/SHARE.svg" alt="Partager le lien" style="width: 24px; height: 24px">
                                                     <p>Partager</p>
                                                 </div>
@@ -355,6 +355,155 @@ document.addEventListener('DOMContentLoaded', () => {
                                         </div>
                                     `;
                                     journeyInfo.appendChild(journeySummary);
+
+                                    document.getElementById('share-button').addEventListener('click', () => {
+                                        const journeyUrl = `${window.location.origin}/journey.html?journey=${journeyId}`;
+                                        navigator.clipboard.writeText(journeyUrl).then(() => {
+                                            alert('Lien copié dans le presse-papiers');
+                                        }).catch(err => {
+                                            console.error('Erreur lors de la copie du lien: ', err);
+                                        });
+                                    });
+
+                                    const icons = {
+                                        'TRAM': 'assets/img/TRAM.png',
+                                        'METRO': 'assets/img/METRO.png',
+                                        'TRAIN': 'assets/img/TRAIN.png',
+                                        'RER': 'assets/img/RER.png',
+                                        'PMR': 'assets/img/PMR.png',
+                                        'LEAF': 'assets/img/LEAF.png'
+                                    };
+
+                                    const base64Icons = {};
+
+                                    function getBase64Image(imgUrl, callback) {
+                                        var img = new Image();
+                                        img.crossOrigin = 'Anonymous';
+                                        img.onload = function() {
+                                            var canvas = document.createElement('canvas');
+                                            canvas.width = img.width;
+                                            canvas.height = img.height;
+                                            var ctx = canvas.getContext('2d');
+                                            ctx.drawImage(img, 0, 0);
+                                            var dataURL = canvas.toDataURL('image/png');
+                                            callback(dataURL);
+                                        };
+                                        img.src = imgUrl;
+                                    }
+
+                                    function loadAllIcons(icons, callback) {
+                                        const keys = Object.keys(icons);
+                                        let loadedCount = 0;
+
+                                        keys.forEach(key => {
+                                            getBase64Image(icons[key], (base64Image) => {
+                                                base64Icons[key] = base64Image;
+                                                loadedCount++;
+                                                if (loadedCount === keys.length) {
+                                                    callback(base64Icons);
+                                                }
+                                            });
+                                        });
+                                    }
+
+                                    // Usage example:
+                                    loadAllIcons(icons, (base64Icons) => {
+                                        console.log(base64Icons);
+                                    });
+
+                                    function hexToRgb(hex) {
+                                        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                                        return result ? {
+                                            r: parseInt(result[1], 16),
+                                            g: parseInt(result[2], 16),
+                                            b: parseInt(result[3], 16)
+                                        } : null;
+                                    }
+
+                                    document.getElementById('print-button').addEventListener('click', () => {
+                                        const { jsPDF } = window.jspdf;
+
+                                        const doc = new jsPDF();
+
+                                        const loadImageAndDraw = (base64Image, x, y, width, height, callback) => {
+                                            doc.addImage(base64Image, 'PNG', x, y, width, height);
+                                            if (callback) callback();
+                                        };
+
+                                        doc.setFontSize(22);
+                                        doc.setTextColor(40, 78, 118);
+                                        doc.setFont("helvetica", "bold");
+                                        doc.text('Trajet', 10, 20);
+
+                                        doc.setFontSize(16);
+                                        doc.setFont("helvetica", "normal");
+                                        doc.text(`De ${journeyData.path[0].stop_name} à ${journeyData.path[journeyData.path.length - 1].stop_name}`, 10, 30);
+
+                                        const addJourneyDetails = (callback) => {
+                                            let yOffset = 40;
+                                            let stepsProcessed = 0;
+                                            const pageHeight = doc.internal.pageSize.height;
+
+                                            journeyData.path.forEach((step, index) => {
+                                                if (yOffset > pageHeight - 20) {
+                                                    doc.addPage();
+                                                    yOffset = 20;
+                                                }
+
+                                                if (index > 0) {
+                                                    doc.setDrawColor(200, 200, 200);
+                                                    doc.line(10, yOffset - 3, 200, yOffset - 3);
+                                                }
+
+                                                let iconSrc;
+                                                switch (lineTypes[step.line]) {
+                                                    case 0:
+                                                        iconSrc = base64Icons['TRAM'];
+                                                        break;
+                                                    case 1:
+                                                        iconSrc = base64Icons['METRO'];
+                                                        break;
+                                                    case 2:
+                                                        iconSrc = base64Icons['TRAIN'];
+                                                        break;
+                                                    case 3:
+                                                        iconSrc = base64Icons['RER'];
+                                                        break;
+                                                    default:
+                                                        iconSrc = null;
+                                                }
+
+                                                const addStepDetails = () => {
+                                                    doc.setTextColor(0, 0, 0);
+                                                    doc.setFontSize(12);
+                                                    doc.text(`${index + 1}. ${step.stop_name}`, 25, yOffset);
+
+                                                    doc.setFontSize(10);
+                                                    const rgb = hexToRgb(lineColors[step.line]);
+                                                    doc.setTextColor(rgb.r, rgb.g, rgb.b);
+                                                    doc.text(`Ligne: ${lineNames[step.line] || 'N/A'}`, 25, yOffset + 5);
+                                                    doc.text(`Temps: ${parseInt(step.time / 60)} min ${step.time % 60} s - ${step.connection_type === 'transfer' ? 'Transfert' : step.connection_type === 'start' ? 'Départ' : 'Voyage'}`, 25, yOffset + 10);
+
+                                                    yOffset += 20;
+                                                    stepsProcessed++;
+                                                    if (stepsProcessed === journeyData.path.length) {
+                                                        callback();
+                                                    }
+                                                };
+
+                                                if (iconSrc) {
+                                                    loadImageAndDraw(iconSrc, 10, yOffset - 5, 10, 10, addStepDetails);
+                                                } else {
+                                                    addStepDetails();
+                                                }
+                                            });
+                                        };
+
+                                        addJourneyDetails(() => {
+                                            doc.save('journey.pdf');
+                                        });
+                                    });
+
 
                                     // Draw a line from coordinate A to coordinate B
                                     const drawLine = (fromStopId, toStopId, color, weight, dashArray, opacity) => {

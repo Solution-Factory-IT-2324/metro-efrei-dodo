@@ -290,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const displaySuggestions = (input, suggestions, suggestionsContainer) => {
                 suggestionsContainer.innerHTML = '';
                 // Limit to 5 suggestions
-                suggestions = suggestions.slice(0, 5);
+                suggestions = suggestions.slice(0, 8);
                 suggestions.forEach(suggestion => {
                     const div = document.createElement('div');
                     div.classList.add('suggestion');
