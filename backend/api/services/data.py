@@ -678,7 +678,7 @@ def emission_calculator(journey_path, emission_factors, graph):
             case 1:
                 mode = 'metro'
             case 2:
-                mode = 'train'
+                mode = 'rail'
             case 3:
                 mode = 'bus'
             case 7:
