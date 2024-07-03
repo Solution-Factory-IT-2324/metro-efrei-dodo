@@ -1,0 +1,6 @@
+mysql-connector-python
+python-dotenv
+pillow
+tqdm
+flask
+
