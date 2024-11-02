@@ -701,7 +701,8 @@ def emission_calculator(journey_path, emission_factors, graph):
         cpt_distance += distance
 
     CO2_journey_car = 99.0
-    return cpt_CO2_journey, cpt_distance * CO2_journey_car, cpt_distance
+    cpt_normal_journey = cpt_CO2_journey * 1.2
+    return cpt_CO2_journey, cpt_distance * CO2_journey_car, cpt_distance, cpt_normal_journey
 
 
 def get_emission_factors():

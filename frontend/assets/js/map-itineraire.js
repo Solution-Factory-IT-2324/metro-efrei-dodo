@@ -65,22 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         });
 
-                        // Draw only transfer
-                        const drawTransfers = () => {
-                            edges.forEach(edge => {
-                                if (edge.type !== 'transfer') {
-                                    return;
-                                }
-                                const fromCoords = [vertices[edge.from_stop_id].stop_lat, vertices[edge.from_stop_id].stop_lon];
-                                const toCoords = [vertices[edge.to_stop_id].stop_lat, vertices[edge.to_stop_id].stop_lon];
-                                const polyline = L.polyline([fromCoords, toCoords], {
-                                    color: currentBaseLayer === baseLayers['CartoDB Dark Matter'] ? 'rgba(255,255,255,0.25)' : '#000000',
-                                    opacity: 0.05,
-                                    weight: 3,
-                                }).addTo(map);
-                            });
-                        };
-
                         // Fetch traces data from the Ile-de-France Mobilités dataset
                         fetch('http://127.0.0.1:8080/assets/json/traces-du-reseau-ferre-idf.json')
                             .then(response => response.json())
@@ -93,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     records.forEach(record => {
                                         const fields = record;
                                         const coordinates = fields.geo_shape.geometry.coordinates;
-                                        const picto = fields.picto_final ? fields.picto_final !== "picto_intermediaire/300" ? `<img src="${fields.picto_final}" alt="icon" style="width:16px; height:16px;">` : fields.mode === "TER" ? `<img src="/assets/img/TRAIN.svg" alt="icon" style="width:16px; height:16px;">` : '' : '';
+                                        const picto = fields.picto_final ? fields.picto_final !== "picto_intermediaire/300" ? `${fields.picto_final}` : fields.mode === "TER" ? `` : '' : '';
 
                                         let color = lineColors['IDFM:' + fields.idrefligc] || 'blue';
                                         if (color === 'blue') {
@@ -132,12 +116,31 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 dashArray: dashArray,
                                                 opacity: 0.3,
                                             }).bindPopup(`
-                                            ${picto ? picto : ''}${picto ? ' ' : ''}<b>${fields.reseau}</b><br>
+                                            ${picto ? '<img src="' : ''}${picto ? picto : ''}${picto ? '" alt="icon" style="width:16px; height:16px;"></img>' : ''}${picto ? ' ' : ''}<b>${fields.reseau}</b><br>
                                             ID Ligne: ${fields.idrefligc}<br>
                                             Mode: ${fields.mode === 'TRAIN' ? 'Transilien' : fields.mode}<br>
                                             `).addTo(map);
 
-                                            layers.push({layer: polyline, mode: fields.mode});
+                                            layers.push({ layer: polyline, mode: fields.mode });
+
+                                            if (picto && latlngs.length % 7 === 0) {
+                                                for (let i = 0; i < latlngs.length; i += 1000) {
+                                                    const marker = L.marker(latlngs[i], {
+                                                        icon: L.icon({
+                                                            iconUrl: picto,
+                                                            iconSize: [16, 16],
+                                                            iconAnchor: [8, 8],
+                                                            popupAnchor: [0, -8],
+                                                            className: 'icon-opacity'
+                                                        })
+                                                    }).addTo(map);
+                                                    marker.bindPopup(`
+                                                        ${picto ? '<img src="' : ''}${picto ? picto : ''}${picto ? '" alt="icon" style="width:16px; height:16px;"></img>' : ''}${picto ? ' ' : ''}<b>${fields.reseau}</b><br>
+                                                        ID Ligne: ${fields.idrefligc}<br>
+                                                        Mode: ${fields.mode === 'TRAIN' ? 'Transilien' : fields.mode}<br>
+                                                    `);
+                                                }
+                                            }
                                         }
                                     });
 
@@ -169,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                             color: '#98aac3',
                                             fillColor: '#ffffff',
                                             opacity: 0.2,
-                                            fillOpacity: 0.5,
+                                            fillOpacity: 0.25,
                                         })
                                             .bindPopup(`
                                             <b>${station.stop_name}</b><br>
@@ -334,6 +337,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             endInput.addEventListener('blur', () => {
                 setTimeout(() => hideSuggestions(endSuggestionsContainer), 100);
+            });
+
+            // Add listener when dark/light mode changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+                setBaseLayer();
+                console.log(currentBaseLayer === baseLayers['CartoDB Dark Matter'])
+                updateConnections();
+            });
+
+            // Event listener for base layer change
+            map.on('baselayerchange', (event) => {
+                currentBaseLayer = event.layer;
+                console.log(`Base layer changed to: ${event.name}`);
+                updateConnections();
             });
 
             startInput.addEventListener('focus', () => {

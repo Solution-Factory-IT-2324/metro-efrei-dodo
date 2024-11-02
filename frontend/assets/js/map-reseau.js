@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             const toCoords = [vertices[edge.to_stop_id].stop_lat, vertices[edge.to_stop_id].stop_lon];
                             const polyline = L.polyline([fromCoords, toCoords], {
                                 color: currentBaseLayer === baseLayers['CartoDB Dark Matter'] ? '#ffffff' : '#000000',
-                                opacity: 0.1,
+                                opacity: currentBaseLayer === baseLayers['CartoDB Dark Matter'] ? 0.1 : 0.01,
                                 weight: 3,
                             }).addTo(map);
                         });
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 records.forEach(record => {
                                     const fields = record;
                                     const coordinates = fields.geo_shape.geometry.coordinates;
-                                    const picto = fields.picto_final ? fields.picto_final !== "picto_intermediaire/300" ? `<img src="${fields.picto_final}" alt="icon" style="width:16px; height:16px;">` : fields.mode === "TER" ? `<img src="/assets/img/TRAIN.svg" alt="icon" style="width:16px; height:16px;">` : '' : '';
+                                    const picto = fields.picto_final ? fields.picto_final !== "picto_intermediaire/300" ? `${fields.picto_final}` : fields.mode === "TER" ? `` : '' : '';
 
                                     let color = lineColors['IDFM:' + fields.idrefligc] || 'blue';
                                     if (color === 'blue') {
@@ -139,12 +139,30 @@ document.addEventListener('DOMContentLoaded', () => {
                                             weight: weight,
                                             dashArray: dashArray,
                                         }).bindPopup(`
-                                        ${picto ? picto : ''}${picto ? ' ' : ''}<b>${fields.reseau}</b><br>
+                                        ${picto ? '<img src="' : ''}${picto ? picto : ''}${picto ? '" alt="icon" style="width:16px; height:16px;"></img>' : ''}${picto ? ' ' : ''}<b>${fields.reseau}</b><br>
                                         ID Ligne: ${fields.idrefligc}<br>
                                         Mode: ${fields.mode === 'TRAIN' ? 'Transilien' : fields.mode}<br>
                                         `).addTo(map);
 
                                         layers.push({ layer: polyline, mode: fields.mode });
+
+                                        if (picto && latlngs.length % 7 === 0) {
+                                            for (let i = 0; i < latlngs.length; i += 1000) {
+                                                const marker = L.marker(latlngs[i], {
+                                                    icon: L.icon({
+                                                        iconUrl: picto,
+                                                        iconSize: [16, 16],
+                                                        iconAnchor: [8, 8],
+                                                        popupAnchor: [0, -8],
+                                                    })
+                                                }).addTo(map);
+                                                marker.bindPopup(`
+                                                    ${picto ? '<img src="' : ''}${picto ? picto : ''}${picto ? '" alt="icon" style="width:16px; height:16px;"></img>' : ''}${picto ? ' ' : ''}<b>${fields.reseau}</b><br>
+                                                    ID Ligne: ${fields.idrefligc}<br>
+                                                    Mode: ${fields.mode === 'TRAIN' ? 'Transilien' : fields.mode}<br>
+                                                `);
+                                            }
+                                        }
                                     }
                                 });
 

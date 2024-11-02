@@ -629,12 +629,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     <div class="emission-values">
                                                         <p><strong>Calcul de l'émission de CO<sub>2</sub> du trajet</strong></p>
                                                         <p>Émission de CO<sub>2</sub> calculée pour ce trajet : <span class="emission-value">${Math.round(emissionData.emission_journey_public_transport)} g</span></p>
+                                                        <p>Émission de CO<sub>2</sub> calculée sur votre itinéraire habituel en transport en commun :  <span class="emission-value">${Math.round(emissionData.emission_normal_journey)} g</span></p>
                                                         <p>Émission de CO<sub>2</sub> calculée pour le même trajet en voiture : <span class="emission-value">${Math.round(emissionData.emission_journey_car)} g</span></p>
                                                     </div>
                                                     <br>
                                                     <div class="responsible-message">
                                                         <span class="emission-value">Soyez responsables !</span>
-                                                        <p>Pour un trajet domicile – travail, à l'année, utiliser la voiture et les transports en commun sur ce trajet, fait économiser <span class="emission-value">${Math.round((emissionData.emission_journey_car - emissionData.emission_journey_public_transport) * (365-52*2-31))/100} kg de CO<sub>2</sub></span></p>
+                                                        <p>Pour un trajet domicile – travail, à l'année, utiliser les transports en commun par rapport à la voiture sur ce trajet fait économiser <span class="emission-value">${Math.round((emissionData.emission_journey_car - emissionData.emission_journey_public_transport) * (365-52*2-31))/100} kg de CO<sub>2</sub></span></p>
                                                     </div>
                                                     `;
                                                 } else {

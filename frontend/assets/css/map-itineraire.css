@@ -6,6 +6,10 @@ body {
     margin: 0;
 }
 
+.icon-opacity {
+        opacity: 0.3;
+}
+
 .modal-container {
     background-color: #ffffff;
     border-radius: 10px;

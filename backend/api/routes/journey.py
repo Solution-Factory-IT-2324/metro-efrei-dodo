@@ -66,11 +66,12 @@ def get_journey_emission(journey_id):
         return json_response(message='Graph data not available', status=500)
 
     try:
-        emission_journey_public_transport, emission_journey_car, distance = emission_calculator(journey_data['path'],
+        emission_journey_public_transport, emission_journey_car, distance, emission_normal_journey = emission_calculator(journey_data['path'],
                                                                                                 emission_data,
                                                                                                 graph_data)
         return json_response(data={'emission_journey_public_transport': emission_journey_public_transport,
                                    'emission_journey_car': emission_journey_car,
+                                   'emission_normal_journey': emission_normal_journey,
                                    'journey_id': journey_id,
                                    'distance': distance,
                                    'Unit emission': 'g CO2 eq.',
