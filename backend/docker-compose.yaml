@@ -1,0 +1,16 @@
+services:
+  med_mysql:
+    image: mysql:8.0
+    container_name: med_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: med_mysql_password
+      MYSQL_DATABASE: med_mysql_db
+      MYSQL_USER: med_mysql_user
+      MYSQL_PASSWORD: med_mysql_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - med_mysql:/var/lib/mysql
+
+volumes:
+    med_mysql: {}

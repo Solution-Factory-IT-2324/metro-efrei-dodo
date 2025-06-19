@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 dashArray: dashArray,
                                                 opacity: 0.15,
                                             }).bindPopup(`
-                                            ${picto ? picto : ''}${picto ? ' ' : ''}<b>${fields.reseau}</b><br>
+                                            ${picto ? picto : ''}${picto ? ' ' : ''}<b>${fields.res_com}</b><br>
                                             ID Ligne: ${fields.idrefligc}<br>
                                             Mode: ${fields.mode === 'TRAIN' ? 'Transilien' : fields.mode}<br>
                                             `).addTo(map);

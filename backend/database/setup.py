@@ -17,7 +17,11 @@ def setup_database(db_host=config.db_host, db_user=config.db_user, db_password=c
             print(f"Setting up database {db_name}")
             cursor = database_connection.cursor()
             with open(f"{version}/setup{version.lower()}.sql", "r") as file:
-                cursor.execute(file.read(), multi=True)
+                sql_commands = file.read().split(';')
+                for command in sql_commands:
+                    command = command.strip()
+                    if command:
+                        cursor.execute(command)
             cursor.close()
             database_connection.close()
             print(f"Database \"{db_name}\" created. Version: {version}")
